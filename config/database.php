@@ -64,6 +64,20 @@ $db['default']['swap_pre'] = '';
 $db['default']['autoinit'] = TRUE;
 $db['default']['stricton'] = FALSE;
 
-
+$db['juliet']['hostname'] = '172.16.7.52';//'116.67.94.11:9876';//'127.0.0.1';
+$db['juliet']['username'] = 'userid';//'daondb';
+$db['juliet']['password'] = 'userpassword';//'ekdhsdb';
+$db['juliet']['database'] = 'userdb';//;'daondb';
+$db['juliet']['dbdriver'] = 'mysql';
+$db['juliet']['dbprefix'] = '';
+$db['juliet']['pconnect'] = TRUE;
+$db['juliet']['db_debug'] = TRUE;
+$db['juliet']['cache_on'] = FALSE;
+$db['juliet']['cachedir'] = '';
+$db['juliet']['char_set'] = 'utf8';
+$db['juliet']['dbcollat'] = 'utf8_general_ci';
+$db['juliet']['swap_pre'] = '';
+$db['juliet']['autoinit'] = TRUE;
+$db['juliet']['stricton'] = FALSE;
 /* End of file database.php */
 /* Location: ./application/config/database.php */

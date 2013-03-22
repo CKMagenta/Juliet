@@ -14,7 +14,7 @@
 | path to your installation.
 |
 */
-$config['base_url']	= 'http://172.16.7.52/Projects/CI/';
+$config['base_url']	= 'http://172.16.7.52/Projects/CI/';//'http://116.67.94.11:9876/Projects/CI/';
 
 /*
 |--------------------------------------------------------------------------
