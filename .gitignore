@@ -3,3 +3,8 @@
 */logs/!index.html
 */cache/*
 */cache/!index.html
+config/*
+.classpath
+.project
+.buildpath
+.settings/*
