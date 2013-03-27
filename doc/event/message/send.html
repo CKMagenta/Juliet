@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>EVENT/MESSAGE:SEND</title>
+</head>
+<body>
+<div>
+	<h2>EVENT/MESSAGE:SEND</h2>
+</div>
+<div>
+	<p>
+		메세지 전송. 채팅과 DOCUMENT와 SURVEY를 전송할 때 모두 이 이벤트를 활용하고 세부 구분은 서버 쪽에서 한다. 
+	</p>
+</div>
+<div>
+	<ul>
+		<li>request payload
+			<ul>
+				<li>event / MESSAGE:SEND</li>
+				<li>data
+					<ul>
+						<li>sender_hash / 발신자 해쉬</li>
+						<li>receiver_hash / 수신자 해쉬 (string 또는 string array)</li>
+						<li>room_hash	/	</li>
+						<li>message	/	메세지 객체
+							<ul>
+								<li>type / 메세지 타입 숫자</li>
+								<li>title / 메세지 타이틀(채팅에는 필요없음)</li>
+								<li>content / 메세지 내용</li>
+								<li>appendix	/	추가 정보</li>
+							</ul>
+						</li>
+						
+					</ul>
+				</li>
+			</ul>
+		</li>
+		<li>response payload
+			<ul>
+				<li>성공 시
+					<ul>
+						<li>event / MESSAGE:SEND</li>
+						<li>status / 1 (SUCCESS)</li>
+						<li>data 
+							<ul>
+								<li>msg	/	gcm server에서 받은 response json 객체</li>
+								<li>receiversIds	/	수신자의 hash array</li>
+								<li>regids / 수신자의 gcm registration id array</li>
+								<li>msg_hash / 메세지의 seq 해시</li>
+							</ul>
+						</li>
+					</ul>
+				</li>
+				<li>인수가 부족할 때
+					<ul>
+					<li>event / MESSAGE:SEND</li>
+					<li>status / 2 (INSUFFICIENT_ARGUMENTS)</li>
+					<li>data / "insufficient informations"
+					</ul>
+				</li>
+				<li>수신/발신자 해시가 이상할때
+					<ul>
+					<li>event / MESSAGE:SEND</li>
+					<li>status / 3 (NO_DATA)</li>
+					<li>data / "invalid sender hash" 또는 "invalid receiver hash"
+					</ul>
+				</li>
+			</ul>
+		</li>
+		
+	</ul>
+</div>
+</body>
+</html>

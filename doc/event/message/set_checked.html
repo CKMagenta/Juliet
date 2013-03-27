@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>EVENT/MESSAGE:SET_CHECKED</title>
+</head>
+<body>
+<div>
+	<h2>EVENT/MESSAGE:SET_CHECKED</h2>
+</div>
+<div>
+	<p>
+		메세지 확인 시 호출  
+	</p>
+</div>
+<div>
+	<ul>
+		<li>request payload
+			<ul>
+				<li>event / MESSAGE:SET_CHECKED</li>
+				<li>data
+					<ul>
+						<li>type / 메세지 타입</li>
+						<li>msg_hash / 메세지의 seq 해시</li>
+						<li>user_hash / 유저 해시</li>
+					</ul>
+				</li>
+			</ul>
+		</li>
+		<li>response payload
+			<ul>
+				<li>성공 시
+					<ul>
+						<li>event / MESSAGE:SET_CHECKED</li>
+						<li>status / 1 (SUCCESS)</li>
+						<li>data / "success"
+					</ul>
+				</li>
+				<li>인수가 부족할 때
+					<ul>
+					<li>event / MESSAGE:SET_CHECKED</li>
+					<li>status / 2 (INSUFFICIENT_ARGUMENTS)</li>
+					<li>data / "insufficient informations"
+					</ul>
+				</li>
+			</ul>
+		</li>
+		
+	</ul>
+</div>
+</body>
+</html>

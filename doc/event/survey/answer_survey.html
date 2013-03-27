@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>EVENT/SURVEY:ANSWER_SURVEY</title>
+</head>
+<body>
+<div>
+	<h2>EVENT/SURVEY:ANSWER_SURVEY</h2>
+</div>
+<div>
+	<p>
+		설문조사에 응답  
+	</p>
+</div>
+<div>
+	<ul>
+		<li>request payload
+			<ul>
+				<li>event / SURVEY:ANSWER_SURVEY</li>
+				<li>data
+					<ul>
+						<li>user_hash	/	유저 해시</li>
+						<li>survey_hash	/	설문조사 seq 해시</li>
+						<li>answersheet	/	설문조사 응답 정보를 담고 있는 json object</li>
+					</ul>
+				</li>
+			</ul>
+		</li>
+		<li>response payload
+			<ul>
+				<li>성공 시
+					<ul>
+						<li>event / SURVEY:ANSWER_SURVEY</li>
+						<li>status / 1 (SUCCESS)</li>
+						<li>data / "success"
+						</li>
+					</ul>
+				</li>
+			</ul>
+		</li>
+		
+	</ul>
+</div>
+</body>
+</html>

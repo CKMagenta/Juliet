@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>EVENT/DEVICE:UNREGISTER</title>
+</head>
+<body>
+<div>
+	<h2>EVENT/DEVICE:UNREGISTER</h2>
+</div>
+<div>
+	<p>
+		사용자의 기기를 등록해지. 
+	</p>
+</div>
+<div>
+	<ul>
+		<li>request payload
+			<ul>
+				<li>event / DEVICE:UNREGISTER</li>
+				<li>data
+					<ul>
+						<li>uuid / 기기식별용 uuid</li>
+						<li>regid / gcm registartion key</li>
+					</ul>
+				</li>
+			</ul>
+		</li>
+		<li>response payload
+			<ul>
+				<li>성공 시
+					<ul>
+						<li>event / DEVICE:UNREGISTER</li>
+						<li>status / 1 (SUCCESS)</li>
+						<li>data / "success"
+						</li>
+					</ul>
+				</li>
+				<li>인수가 부족할 때
+					<ul>
+						<li>event / DEVICE:UNREGISTER</li>
+						<li>status / 2 (INSUFFICIENT_ARGUMENTS)</li>
+						<li>data / "insufficient informations"
+					</ul>
+				</li>
+				<li>삭제하려는 데이터가 DB에 없을 때
+					<ul>
+						<li>event / DEVICE:UNREGISTER</li>
+						<li>status / 3 (NO_DATA)</li>
+						<li>data / "no data in table"
+					</ul>
+				</li>
+			</ul>
+		</li>
+		
+	</ul>
+</div>
+</body>
+</html>

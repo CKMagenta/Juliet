@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>EVENT/USER:GET_USER_INFO</title>
+</head>
+<body>
+<div>
+	<h2>EVENT/USER:GET_USER_INFO</h2>
+</div>
+<div>
+	<p>
+		사용자 정보 가져오기 
+	</p>
+</div>
+<div>
+	<ul>
+		<li>request payload
+			<ul>
+				<li>event / USER:GET_USER_INFO</li>
+				<li>data
+					<ul>
+						<li>user_hash / 유저 해시 (string 또는 string array)</li>
+					</ul>
+				</li>
+			</ul>
+		</li>
+		<li>response payload
+			<ul>
+				<li>성공 시
+					<ul>
+						<li>event / USER:GET_USER_INFO</li>
+						<li>status / 1 (SUCCESS)</li>
+						<li>data (input에 따라 1dim array 또는 2dim array)
+							<ul>
+								<li>user_hash	/	유저 해쉬</li>
+								<li>user_name	/	사용자 이름</li>
+								<li>dept_code	/	부서 코드</li>
+								<li>dept_name	/	부서 이름</li>
+								<li>dept_full_name /	전체 부서 경로 (스페이스로 구분)</li>
+								<li>user_rank	/	계급</li>
+								<li>user_duty	/	직위</li>
+								<li>pic_filename	/	프로필사진경로</li>
+								<li>is_enabled	/	활성화여부</li>
+							</ul>
+						</li>
+					</ul>
+				</li>
+				<li>인수가 부족할 때
+					<ul>
+					<li>event / USER:GET_USER_INFO</li>
+					<li>status / 2 (INSUFFICIENT_ARGUMENTS)</li>
+					<li>data / "insufficient informations"
+					</ul>
+				</li>
+				<li>등록되지 않은 유저일 때
+					<ul>
+					<li>event / USER:GET_USER_INFO</li>
+					<li>status / 3 (NO_DATA)</li>
+					<li>data / "unregistered user"
+					</ul>
+				</li>
+			</ul>
+		</li>
+		
+	</ul>
+</div>
+</body>
+</html>
