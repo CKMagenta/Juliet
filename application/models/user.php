@@ -74,7 +74,7 @@ class User extends CI_Model {
 				from js_user u
 				left join js_department d
 					on u.dept_seq = d.seq
-				where u.user_hash = ? and u.is_enabled = 1 ";
+				where u.user_hash = ?";
 				$res[] = $this->db->query($query,array($hash))->row_array();
 			} 
 			
@@ -93,11 +93,9 @@ class User extends CI_Model {
 				from js_user u
 				left join js_department d
 					on u.dept_seq = d.seq
-				where u.user_hash = ? and u.is_enabled = 1 ";
+				where u.user_hash = ? ";
 			$res = $this->db->query($query,array($data['user_hash']))->row_array();
 		}
-		
-
 		
 		if ( !$res ) {
 			$this->responsePayload['status'] = NO_DATA;

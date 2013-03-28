@@ -33,6 +33,8 @@ class Handler extends CI_Controller {
 			die();
 		}
 
+		$requestPayload = json_decode($requestPayload,true);
+		
 		//TODO:VALIDATION, LOGGING
 
 		$this->response($requestPayload);
@@ -54,9 +56,6 @@ class Handler extends CI_Controller {
 				break;
 			case "MESSAGE":
 				$model = 'message';
-				break;
-			case "SURVEY":
-				$model = 'survey';
 				break;
 			default:
 				die();
