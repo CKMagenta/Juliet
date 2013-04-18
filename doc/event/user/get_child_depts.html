@@ -10,7 +10,7 @@
 </div>
 <div>
 	<p>
-		유저 등록 
+		하위 부서 목록
 	</p>
 </div>
 <div>
@@ -18,10 +18,7 @@
 		<li>request payload
 			<ul>
 				<li>event / USER:GET_CHILD_DEPTS</li>
-				<li>data
-					<ul>
-						<li>dept_hash / 부서해시</li>
-					</ul>
+				<li>data <br> [ {"dept_hash":부서해쉬} ]
 				</li>
 			</ul>
 		</li>
@@ -31,13 +28,16 @@
 					<ul>
 						<li>event / USER:GET_CHILD_DEPTS</li>
 						<li>status / 1 (SUCCESS)</li>
-						<li>data ( 건제 순(DB 내부의 dept_code 순서)으로 정렬된 2dim array )
-							<ul>
-								<li>dept_hash	/	부서 해쉬</li>
-								<li>dept_code	/	부서 코드 (건제순 정렬용)</li>
-								<li>dept_name	/	부서 이름</li>
-								<li>dept_full_name	/	부서 전체 이름</li>
-							</ul>
+						<li>data 
+							<pre>
+[ { "dept_hash":부서 해쉬,
+"dept_code":부서 코드,
+"dept_name":부서 이름,
+"dept_full_name":부서 전체이름 },
+  { ... },
+  { ... }, 
+]
+							 </pre>
 						</li>
 					</ul>
 				</li>
@@ -45,7 +45,11 @@
 					<ul>
 					<li>event / USER:GET_CHILD_DEPTS</li>
 					<li>status / 2 (INSUFFICIENT_ARGUMENTS)</li>
-					<li>data / "insufficient informations"
+					<li>data 
+					<pre>
+[ { "msg":에러 메세지} ]
+					</pre>
+					</li>
 					</ul>
 				</li>
 			</ul>

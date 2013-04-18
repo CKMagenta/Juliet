@@ -19,11 +19,12 @@
 			<ul>
 				<li>event / DEVICE:IS_REGISTERED</li>
 				<li>data
-					<ul>
-						<li>user_hash / 유저 해시</li>
-						<li>uuid / 기기식별용 uuid</li>
-						<li>regid / gcm registartion key</li>
-					</ul>
+<pre>
+[ { "user_hash": 유저 해쉬,
+	"uuid": 기기 식별용 uuid,
+	"regid": gcm registration key
+} ]
+</pre>
 				</li>
 			</ul>
 		</li>
@@ -34,10 +35,10 @@
 						<li>event / DEVICE:IS_REGISTERED</li>
 						<li>status / 1 (SUCCESS)</li>
 						<li>data
-							<ul>
-								<li>isRegistered / 기기의 DB 등록 여부</li>
-								<li>isEnabled / 기기의 활성화 여부</li>
-							</ul>
+<pre>
+[ { "isRegistered": 기기 등록 여부,
+	"isEnabled": 기기 활성화 여부} ]
+</pre>
 						</li>
 					</ul>
 				</li>
@@ -45,7 +46,11 @@
 					<ul>
 					<li>event / DEVICE:IS_REGISTERED</li>
 					<li>status / 2 (INSUFFICIENT_ARGUMENTS)</li>
-					<li>data / "insufficient informations"
+					<li>data 
+<pre>
+[{"msg": 메세지}]
+</pre>
+					</li>
 					</ul>
 				</li>
 			</ul>

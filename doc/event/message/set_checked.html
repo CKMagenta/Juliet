@@ -19,11 +19,12 @@
 			<ul>
 				<li>event / MESSAGE:SET_CHECKED</li>
 				<li>data
-					<ul>
-						<li>type / 메세지 타입</li>
-						<li>msg_hash / 메세지의 seq 해시</li>
-						<li>user_hash / 유저 해시</li>
-					</ul>
+<pre>
+[ { "type":메세지 타입,
+	"msg_hash": 메세지 해쉬
+	"user_hash": 유저 해쉬
+ } ]
+</pre>
 				</li>
 			</ul>
 		</li>
@@ -33,14 +34,23 @@
 					<ul>
 						<li>event / MESSAGE:SET_CHECKED</li>
 						<li>status / 1 (SUCCESS)</li>
-						<li>data / "success"
+						<li>data
+<pre>
+[ { "msg": 성공메세지 } ]
+</pre>
+
+						</li>
 					</ul>
 				</li>
 				<li>인수가 부족할 때
 					<ul>
 					<li>event / MESSAGE:SET_CHECKED</li>
 					<li>status / 2 (INSUFFICIENT_ARGUMENTS)</li>
-					<li>data / "insufficient informations"
+					<li>data
+<pre>
+[ { "msg": 에러메세지 } ]
+</pre>
+					</li>
 					</ul>
 				</li>
 			</ul>

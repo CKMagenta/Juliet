@@ -1,5 +1,5 @@
 <?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
-
+date_default_timezone_set ("Asia/Seoul");
 /*
 |--------------------------------------------------------------------------
 | Base Site URL
@@ -14,8 +14,12 @@
 | path to your installation.
 |
 */
-$config['base_url']	= 'localhost/juliet';//'http://116.67.94.11:9876/Projects/CI/';
 
+if ( ENVIRONMENT == 'development') {
+	$config['base_url']	= 'http://localhost/juliet/';
+} else {
+	$config['base_url']	= 'http://116.67.94.11:80/juliet/';//'http://116.67.94.11:9876/Projects/CI/';
+}
 /*
 |--------------------------------------------------------------------------
 | Index File
@@ -180,7 +184,7 @@ $config['directory_trigger']	= 'd'; // experimental not currently in use
 | your log files will fill up very fast.
 |
 */
-$config['log_threshold'] = 0;
+$config['log_threshold'] = 1;
 
 /*
 |--------------------------------------------------------------------------

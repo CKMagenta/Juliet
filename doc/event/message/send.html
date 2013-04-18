@@ -19,20 +19,51 @@
 			<ul>
 				<li>event / MESSAGE:SEND</li>
 				<li>data
-					<ul>
-						<li>sender_hash / 발신자 해쉬</li>
-						<li>receiver_hash / 수신자 해쉬 (string 또는 string array)</li>
-						<li>room_hash	/	</li>
-						<li>message	/	메세지 객체
-							<ul>
-								<li>type / 메세지 타입 숫자</li>
-								<li>title / 메세지 타이틀(채팅에는 필요없음)</li>
-								<li>content / 메세지 내용</li>
-								<li>appendix	/	추가 정보</li>
-							</ul>
-						</li>
-						
-					</ul>
+<ul>
+	<li>message가 chat일 때
+	<pre>
+	[ { "message": {
+					"sender_hash": 발신자 해쉬,
+					"receiver_hash": [ 수신자1, 수신자2, ... ],
+					"type": 메세지 타입 숫자,
+					"title": 메세지 타이틀,
+					"content": 메세지 내용,
+					"room_hash": 채팅방 해쉬
+					}
+		 } ]
+	</pre></li>
+	<li>message가 document일 때
+	<pre>
+	[ { "message": {
+					"sender_hash": 발신자 해쉬,
+					"receiver_hash": [ 수신자1, 수신자2, ... ],
+					"type": 메세지 타입 숫자
+					"title": 메세지 타이틀
+					"content": 메세지 내용,
+					"forwards": [ {  "forwarder": 전달자1 , "TS": 전달시간, "content": 전달내용  }, 
+									{}, ...  ]
+					}
+		 } ]
+	</pre></li>
+	<li>message가 survey일 때
+	<pre>
+	[ { "message": {
+					"sender_hash": 발신자 해쉬,
+					"receiver_hash": [ 수신자1, 수신자2, ... ],
+					"type": 메세지 타입 숫자
+					"title": 메세지 타이틀
+					"content": 메세지 내용,
+					"openTS": 설문조사 시작시간,
+					"closeTS": 설문조사 마감시간,
+					"survey_form":
+						{
+							"questions": 
+						}
+					}
+		 } ]
+	</pre></li>
+
+</ul>
 				</li>
 			</ul>
 		</li>
@@ -43,12 +74,26 @@
 						<li>event / MESSAGE:SEND</li>
 						<li>status / 1 (SUCCESS)</li>
 						<li>data 
-							<ul>
-								<li>msg	/	gcm server에서 받은 response json 객체</li>
-								<li>receiversIds	/	수신자의 hash array</li>
-								<li>regids / 수신자의 gcm registration id array</li>
-								<li>msg_hash / 메세지의 seq 해시</li>
-							</ul>
+<pre>
+[ { "sendResultFromGCM" : GCM 서버로부터 받은 response json 객체 (예시)
+		{ "multicast_id": 216,
+		  "success": 3,
+		  "failure": 3,
+		  "canonical_ids": 1,
+		  "results": [
+		    { "message_id": "1:0408" },
+		    { "error": "Unavailable" },
+		    { "error": "InvalidRegistration" },
+		    { "message_id": "1:1516" },
+		    { "message_id": "1:2342", "registration_id": "32" },
+		    { "error": "NotRegistered"}
+		  ]
+		},
+	"receiver_hash": [수신자해쉬1, 수신자해쉬2, ...]
+	"regids": [수신자 regid1, 수신자 regid2, ... ]
+	"msg_hash": 메세지 해쉬
+} ]
+</pre>
 						</li>
 					</ul>
 				</li>
@@ -56,14 +101,22 @@
 					<ul>
 					<li>event / MESSAGE:SEND</li>
 					<li>status / 2 (INSUFFICIENT_ARGUMENTS)</li>
-					<li>data / "insufficient informations"
+					<li>data
+<pre>
+[ {"msg": 에러메세지 } ]
+</pre>
+					</li>
 					</ul>
 				</li>
 				<li>수신/발신자 해시가 이상할때
 					<ul>
 					<li>event / MESSAGE:SEND</li>
 					<li>status / 3 (NO_DATA)</li>
-					<li>data / "invalid sender hash" 또는 "invalid receiver hash"
+					<li>data
+<pre>
+[ {"msg": 에러메세지 } ]
+</pre>
+					</li>
 					</ul>
 				</li>
 			</ul>

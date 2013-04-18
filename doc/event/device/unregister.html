@@ -19,10 +19,10 @@
 			<ul>
 				<li>event / DEVICE:UNREGISTER</li>
 				<li>data
-					<ul>
-						<li>uuid / 기기식별용 uuid</li>
-						<li>regid / gcm registartion key</li>
-					</ul>
+<pre>
+[ { "uuid":기기 식별용 uuid,
+	"regid": regid }]
+</pre>
 				</li>
 			</ul>
 		</li>
@@ -32,7 +32,10 @@
 					<ul>
 						<li>event / DEVICE:UNREGISTER</li>
 						<li>status / 1 (SUCCESS)</li>
-						<li>data / "success"
+						<li>data 
+<pre>
+[{"msg":메세지}]
+</pre>
 						</li>
 					</ul>
 				</li>
@@ -40,14 +43,22 @@
 					<ul>
 						<li>event / DEVICE:UNREGISTER</li>
 						<li>status / 2 (INSUFFICIENT_ARGUMENTS)</li>
-						<li>data / "insufficient informations"
+						<li>data
+<pre>
+[{"msg":메세지}]
+</pre>
+</li>
 					</ul>
 				</li>
 				<li>삭제하려는 데이터가 DB에 없을 때
 					<ul>
 						<li>event / DEVICE:UNREGISTER</li>
 						<li>status / 3 (NO_DATA)</li>
-						<li>data / "no data in table"
+						<li>data
+<pre>
+[{"msg":메세지}]
+</pre>
+</li>
 					</ul>
 				</li>
 			</ul>

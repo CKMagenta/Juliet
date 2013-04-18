@@ -19,9 +19,9 @@
 			<ul>
 				<li>event / SURVEY:GET_RESULT</li>
 				<li>data
-					<ul>
-						<li>survey_hash	/	설문조사 seq 해시</li>
-					</ul>
+<pre>
+[{"survey_hash":설문조사 해쉬}]
+</pre>
 				</li>
 			</ul>
 		</li>
@@ -31,12 +31,12 @@
 					<ul>
 						<li>event / SURVEY:GET_RESULT</li>
 						<li>status / 1 (SUCCESS)</li>
-						<li>data 
-							<ul>
-								<li>result / 설문조사결과를 담은 json object</li>
-								<li>nReceivers / 읽은사람 수</li>
-								<li>nResponders / 응답자 수</li>
-							</ul>
+						<li>data
+<pre>
+[ { "result": 설문조사 결과를 담은 json object,
+	"nReceivers": 읽은사람 수,
+	"nResponders": 응답자 수}]
+</pre>
 						</li>
 					</ul>
 				</li>

@@ -19,12 +19,13 @@
 			<ul>
 				<li>event / DEVICE:REGISTER</li>
 				<li>data
-					<ul>
-						<li>user_hash / 유저 해시</li>
-						<li>uuid / 기기식별용 uuid</li>
-						<li>regid / gcm registartion key</li>
-						<li>dev_type / device type (안드로이드 a 아이폰 i 피씨 p)</li>
-					</ul>
+<pre>
+[ { "user_hash": 유저 해쉬,
+	"uuid": 기기식별용 uuid,
+	"regid": regid,
+	"dev_type": device type (안드로이드 a, 아이폰 i, 피씨 p)
+	} ]
+</pre>
 				</li>
 			</ul>
 		</li>
@@ -35,11 +36,12 @@
 						<li>event / DEVICE:REGISTER</li>
 						<li>status / 1 (SUCCESS)</li>
 						<li>data
-							<ul>
-								<li>dev_hash / device seq의 hash</li>
-								<li>regid / gcm registartion key</li>
-								<li>uuid / 기기 식별용 uuid</li>
-							</ul>
+<pre>
+[ { "dev_hash": 디바이스 seq 해쉬,
+	"regid": gcm registration key,
+	"uuid": 기기 식별용 uuid
+ } ]
+</pre>
 						</li>
 					</ul>
 				</li>
@@ -47,7 +49,11 @@
 					<ul>
 					<li>event / DEVICE:REGISTER</li>
 					<li>status / 2 (INSUFFICIENT_ARGUMENTS)</li>
-					<li>data / "insufficient informations"
+					<li>data
+					<pre>
+[{"msg":메세지}]
+					</pre> 
+</li>
 					</ul>
 				</li>
 			</ul>

@@ -1,0 +1,107 @@
+\hypertarget{class_handler}{\section{Handler Class Reference}
+\label{class_handler}\index{Handler@{Handler}}
+}
+
+
+Payload \hyperlink{class_handler}{Handler} 클라이언트에서 http get 또는 post 요청으로 payload object를 json의 형태로 전송하면\par
+ 이 컨트롤러의 call 모듈로 받아서 request\-Payload\mbox{[}'event'\mbox{]} 에 설정된 event type을 가지고\par
+ 적절한 모델을 호출하여 요청을 처리한다.  
+
+
+Inheritance diagram for Handler\-:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{class_handler}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{class_handler_a3abfc4c9e7b225e55352dbd29a658b69}{call} ()
+\begin{DoxyCompactList}\small\item\em 진입점 역할을 하는 함수. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+static \hyperlink{class_handler_a651840e3b5f431b660c11ebefceb1ae7}{\$response\-Payload}
+\begin{DoxyCompactList}\small\item\em 응답용 payload 객체. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Private Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{class_handler_a915ef2dbcbff730ff42f85f741b90f4a}{response} (\$request\-Payload)
+\begin{DoxyCompactList}\small\item\em request\-Payload의 event에 따라 해당되는 모델을 호출하고 모델 내에서 작업을 처리한 후\par
+ 설정된 response\-Payload를 json으로 변환하여 클라이언트로 응답한다 \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Payload \hyperlink{class_handler}{Handler} 클라이언트에서 http get 또는 post 요청으로 payload object를 json의 형태로 전송하면\par
+ 이 컨트롤러의 call 모듈로 받아서 request\-Payload\mbox{[}'event'\mbox{]} 에 설정된 event type을 가지고\par
+ 적절한 모델을 호출하여 요청을 처리한다. 
+
+그리고 각각의 모델에서는 이 객체의 static 변수인 response\-Payload에\par
+ 결과를 저장하고 마지막에 handler는 response\-Payload를 json으로 변환하여 응답한다.
+
+\begin{DoxyAuthor}{Author}
+최영우 
+\end{DoxyAuthor}
+\begin{DoxySince}{Since}
+2013.\-3.\-29 
+\end{DoxySince}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{class_handler_a3abfc4c9e7b225e55352dbd29a658b69}{\index{Handler@{Handler}!call@{call}}
+\index{call@{call}!Handler@{Handler}}
+\subsubsection[{call}]{\setlength{\rightskip}{0pt plus 5cm}Handler\-::call (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{class_handler_a3abfc4c9e7b225e55352dbd29a658b69}
+
+
+진입점 역할을 하는 함수. 
+
+request\-Payload를 json의 형태로 get이나 post로 받는다. \hypertarget{class_handler_a915ef2dbcbff730ff42f85f741b90f4a}{\index{Handler@{Handler}!response@{response}}
+\index{response@{response}!Handler@{Handler}}
+\subsubsection[{response}]{\setlength{\rightskip}{0pt plus 5cm}Handler\-::response (
+\begin{DoxyParamCaption}
+\item[{}]{\$request\-Payload}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [private]}}}\label{class_handler_a915ef2dbcbff730ff42f85f741b90f4a}
+
+
+request\-Payload의 event에 따라 해당되는 모델을 호출하고 모델 내에서 작업을 처리한 후\par
+ 설정된 response\-Payload를 json으로 변환하여 클라이언트로 응답한다 
+
+
+\begin{DoxyParams}[1]{Parameters}
+Payload & {\em \$request\-Payload} & \\
+\hline
+\end{DoxyParams}
+
+
+\subsection{Member Data Documentation}
+\hypertarget{class_handler_a651840e3b5f431b660c11ebefceb1ae7}{\index{Handler@{Handler}!\$response\-Payload@{\$response\-Payload}}
+\index{\$response\-Payload@{\$response\-Payload}!Handler@{Handler}}
+\subsubsection[{\$response\-Payload}]{\setlength{\rightskip}{0pt plus 5cm}Handler\-::\$response\-Payload\hspace{0.3cm}{\ttfamily [static]}}}\label{class_handler_a651840e3b5f431b660c11ebefceb1ae7}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+=
+        array(
+                \textcolor{stringliteral}{"event"}=>NULL,  
+                \textcolor{stringliteral}{"status"}=>NULL, 
+                \textcolor{stringliteral}{"data"}=>array() 
+                )
+\end{DoxyCode}
+
+
+응답용 payload 객체. 
+
+\par
+ {\bfseries Event} / event / request\-Payload에서 설정된 것과 똑같은 event 객체\par
+ {\bfseries Int} / status / 해당 요청에 의한 실행 결과 코드\par
+ {\bfseries Array\-List$<$Hash\-Map$<$\-String,\-Object$>$$>$} / data / 결과를 담은 객체. 이벤트별로 구조가 다름 \par
+ 
+
+The documentation for this class was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+C\-:/\-Apache24/htdocs/\-Juliet/application/controllers/handler.\-php\end{DoxyCompactItemize}

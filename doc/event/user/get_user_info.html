@@ -19,9 +19,9 @@
 			<ul>
 				<li>event / USER:GET_USER_INFO</li>
 				<li>data
-					<ul>
-						<li>user_hash / 유저 해시 (string 또는 string array)</li>
-					</ul>
+<pre>
+[ {"user_hash":유저 해쉬}, { ... }, { ... } ]
+</pre>
 				</li>
 			</ul>
 		</li>
@@ -31,18 +31,21 @@
 					<ul>
 						<li>event / USER:GET_USER_INFO</li>
 						<li>status / 1 (SUCCESS)</li>
-						<li>data (input에 따라 1dim array 또는 2dim array)
-							<ul>
-								<li>user_hash	/	유저 해쉬</li>
-								<li>user_name	/	사용자 이름</li>
-								<li>dept_code	/	부서 코드</li>
-								<li>dept_name	/	부서 이름</li>
-								<li>dept_full_name /	전체 부서 경로 (스페이스로 구분)</li>
-								<li>user_rank	/	계급</li>
-								<li>user_duty	/	직위</li>
-								<li>pic_filename	/	프로필사진경로</li>
-								<li>is_enabled	/	활성화여부</li>
-							</ul>
+						<li>data
+<pre>
+[ { "user_hash":유저 해쉬,
+"user_name":유저 이름,
+"user_rank":계급,
+"user_role":직위,
+"dept_code":부서 코드,
+"dept_hash":부서 해쉬,
+"dept_full_name": 전체 부서 경로,
+"pic_filename": 프로필사진 파일명,
+"is_enabled": 활성화여부 },
+  { ... },
+  { ... }, 
+]
+</pre>
 						</li>
 					</ul>
 				</li>
@@ -50,14 +53,22 @@
 					<ul>
 					<li>event / USER:GET_USER_INFO</li>
 					<li>status / 2 (INSUFFICIENT_ARGUMENTS)</li>
-					<li>data / "insufficient informations"
+					<li>data
+					<pre>
+[ { "msg":에러 메세지} ]
+					</pre>
+					</li>
 					</ul>
 				</li>
 				<li>등록되지 않은 유저일 때
 					<ul>
 					<li>event / USER:GET_USER_INFO</li>
 					<li>status / 3 (NO_DATA)</li>
-					<li>data / "unregistered user"
+					<li>data
+					<pre>
+[ { "msg":에러 메세지} ]
+					</pre>
+					</li>
 					</ul>
 				</li>
 			</ul>

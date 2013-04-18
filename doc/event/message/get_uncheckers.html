@@ -19,10 +19,10 @@
 			<ul>
 				<li>event / MESSAGE:GET_UNCHECKERS</li>
 				<li>data
-					<ul>
-						<li>type / 메세지 타입</li>
-						<li>msg_hash / 메세지의 seq 해시</li>
-					</ul>
+<pre>
+[ { "type":메세지 타입
+	"msg_hash": 메세지 해쉬 } ]
+</pre>
 				</li>
 			</ul>
 		</li>
@@ -32,18 +32,23 @@
 					<ul>
 						<li>event / MESSAGE:GET_UNCHECKERS</li>
 						<li>status / 1 (SUCCESS)</li>
-						<li>data ( array ) 
-							<ul>
-							<li>user_hash / 안읽은사람들 user hash</li>
-							</ul>
-						</li>
+						<li>data
+<pre>
+[ { "user_hash": 안 읽은 사람들 유저 해쉬 },
+  { ... },
+  { ... } ... ]
+</pre>					</li>
 					</ul>
 				</li>
 				<li>인수가 부족할 때
 					<ul>
 					<li>event / MESSAGE:GET_UNCHECKERS</li>
 					<li>status / 2 (INSUFFICIENT_ARGUMENTS)</li>
-					<li>data / "insufficient informations"
+					<li>data
+					<pre>
+[ { "msg":에러 메세지} ]
+					</pre>
+					</li>
 					</ul>
 				</li>
 			</ul>

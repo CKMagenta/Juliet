@@ -19,12 +19,12 @@
 			<ul>
 				<li>event / USER:REGISTER</li>
 				<li>data
-					<ul>
-						<li>user_name / 유저 이름</li>
-						<li>dept_hash / 부서 해시</li>
-						<li>role / 직위 </li>
-						<li>rank / 계급 </li>
-					</ul>
+<pre>
+[ { "user_name":유저이름,
+	"dept_hash": 부서 해쉬,
+	"user_role": 직위
+	"user_rank": 계급 } ]
+</pre>
 				</li>
 			</ul>
 		</li>
@@ -35,10 +35,10 @@
 						<li>event / USER:REGISTER</li>
 						<li>status / 1 (SUCCESS)</li>
 						<li>data 
-							<ul>
-								<li>dept_hash	/	부서 해쉬</li>
-								<li>user_hash	/	유저 해시</li>
-							</ul>
+<pre>
+[ { "dept_hash": 부서 해쉬, 
+	"user_hash": 유저 해쉬 } ]
+</pre>
 						</li>
 					</ul>
 				</li>
@@ -46,14 +46,22 @@
 					<ul>
 					<li>event / USER:REGISTER</li>
 					<li>status / 2 (INSUFFICIENT_ARGUMENTS)</li>
-					<li>data / "insufficient informations"
+					<li>data
+					<pre>
+[ { "msg":에러 메세지} ]
+					</pre>
+					</li>
 					</ul>
 				</li>
 				<li>등록되지 않은 부서일 때
 					<ul>
 					<li>event / USER:REGISTER</li>
 					<li>status / 3 (NO_DATA)</li>
-					<li>data / "unregistered department"
+					<li>data
+					<pre>
+[ { "msg":에러 메세지} ]
+					</pre>
+					</li>
 					</ul>
 				</li>
 			</ul>

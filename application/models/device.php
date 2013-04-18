@@ -15,8 +15,8 @@ class Device extends CI_Model {
 	public function act($handler,$eventAr,$requestPayload) {
 		$this->eventAr = $eventAr;
 		$this->requestPayload = $requestPayload;
-		$this->responsePayload =& $handler::$responsePayload;		
-				
+		$this->responsePayload = &Handler::$responsePayload;	
+
 		//sub event별 분류
 		switch( $eventAr[1] ) {
 			case "IS_REGISTERED":
@@ -32,71 +32,51 @@ class Device extends CI_Model {
 	}
 	
 	private function is_registered() {
-		
-		/**
-			○ request
-			-event : DEVICE:IS_REGISTERED
-			-data :
-				-user_hash :	유저해시
-				-uuid :			기기식별용 uuid
-				-regid :		gcm regid
-		 */
-		
 		$data = $this->requestPayload['data'];
 				
-		if( !isset($data['user_hash']) || !isset($data['uuid']) || !isset($data['regid']) || 
-				!$data['user_hash'] || !$data['uuid'] || !$data['regid'] ) {
+		if( !isset($data[0][KEY_USER::IDX]) || !isset($data[0][KEY_DEVICE::UUID]) || !isset($data[0][KEY_DEVICE::GCM_REGISTRATION_ID]) || 
+				!$data[0][KEY_USER::IDX] || !$data[0][KEY_DEVICE::UUID] || !$data[0][KEY_DEVICE::GCM_REGISTRATION_ID] ) {
 			
- 			$this->responsePayload['status'] = INSUFFICIENT_ARGUMENTS;
- 			$this->responsePayload['data'] = 'Insufficient Informations';
+ 			$this->responsePayload['status'] = STATUS::INSUFFICIENT_ARGUMENTS;
+ 			$this->responsePayload['data'][] = array(KEY::RESPONSE_TEXT=>'Insufficient Informations');
 			return;
 		}
 		
 		//TODO: user_hash, uuid, regid가 유효한 값인지 검사
 		
-		$userSeq = $this->db->query("select user_seq from js_user where user_hash = ?",$data['user_hash'])->row('user_seq');
+		$userSeq = $this->db->query("select seq from js_user where user_hash = ?",$data[0][KEY_USER::IDX])->row('seq');
 		
 		//플래그
-		$deviceRegistered = 0;
-		$deviceEnabled = 0;
+		$deviceRegistered = false;
+		$deviceEnabled = false;
 		
 		//등록되어 있는지 쿼리 보내 검사
 		$query = "select is_enabled from js_device where user_seq = ? and regid = ? and uuid = ?";
-		$result = $this->db->query($query,array($userSeq,$data['regid'],$data['uuid']))->row_array();
+		$result = $this->db->query($query,array($userSeq,$data[0][KEY_DEVICE::GCM_REGISTRATION_ID],$data[0][KEY_DEVICE::UUID]))->row_array();
 		
 		if( $result ) {
-			$deviceRegistered = 1;
+			$deviceRegistered = true;
 			
-			$deviceEnabled = $result['is_enabled'];
+			$deviceEnabled = $result['is_enabled']==1?true:false;
 		}
 		
-		$this->responsePayload['status'] = SUCCESS;
-		$this->responsePayload['data'] = array("isRegistered"=>$deviceRegistered,"isEnabled"=>$deviceEnabled);
+		$this->responsePayload['status'] = STATUS::SUCCESS;
+		$this->responsePayload['data'][] = array(KEY_DEVICE::IS_REGISTERED=>$deviceRegistered,KEY_DEVICE::IS_ENABLED=>$deviceEnabled);
 	}
 	
 	private function register() {
 		
-		/**
-			○ request
-			-event : DEVICE:REGISTER
-			-data :
-				-user_hash :	유저코드(기존의 idx)
-				-uuid :			기기식별용 uuid
-				-regid : 		gcm regid
-				-dev_type:		device type
-		 */
-		
 		$data = $this->requestPayload['data'];
 		
-		if( !isset($data['user_hash']) || !isset($data['uuid']) || !isset($data['regid']) ||!isset($data['dev_type']) ||
-				!$data['user_hash'] || !$data['uuid'] || !$data['regid'] || !$data['dev_type'] ) {
+		if( !isset($data[0][KEY_USER::IDX]) || !isset($data[0][KEY_DEVICE::UUID]) || !isset($data[0][KEY_DEVICE::GCM_REGISTRATION_ID]) ||!isset($data[0][KEY_DEVICE::TYPE]) ||
+				!$data[0][KEY_USER::IDX] || !$data[0][KEY_DEVICE::UUID] || !$data[0][KEY_DEVICE::GCM_REGISTRATION_ID] || !$data[0][KEY_DEVICE::TYPE] ) {
 			
- 			$this->responsePayload['status'] = INSUFFICIENT_ARGUMENTS;
- 			$this->responsePayload['data'] = 'Insufficient Informations';
+ 			$this->responsePayload['status'] = STATUS::INSUFFICIENT_ARGUMENTS;
+ 			$this->responsePayload['data'][] = array(KEY::RESPONSE_TEXT=>'Insufficient Informations');
 			return;
 		}
 		
-		$userSeq = $this->db->query("select user_seq from js_user where user_hash = ?",$data['user_hash'])->row('user_seq');
+		$userSeq = $this->db->query("select seq from js_user where user_hash = ?",$data[0][KEY_USER::IDX])->row('seq');
 		
 		$query = 
 		"INSERT INTO `daondb`.`js_device`
@@ -104,21 +84,16 @@ class Device extends CI_Model {
 		`device_type`,
 		`uuid`,
 		`regid`,
-		`registered_ts`,
+		
 		`is_enabled`,
-		`created_ts`,
-		`created_by`) 
-		VALUES (?, ?, ?, ?, now(), 0, now(), ?)
+		`created_ts`) 
+		VALUES (?, ?, ?, ?,  0, now())
 		ON DUPLICATE KEY UPDATE
 		`user_seq` = values(user_seq),
 		`device_type` = values(device_type),
 		`uuid` = values(uuid),
-		`regid` = values(regid),
-		`registered_ts` = now(),
-		`is_enabled` = 0,
-		`modified_ts` = now(),
-		`modified_by` = values(created_by)";
-		$this->db->query($query,array($userSeq,$data['dev_type'],$data['uuid'],$data['regid'],$_SERVER['REMOTE_ADDR']));		
+		`regid` = values(regid)";
+		$this->db->query($query,array($userSeq,$data[0][KEY_DEVICE::TYPE],$data[0][KEY_DEVICE::UUID],$data[0][KEY_DEVICE::GCM_REGISTRATION_ID]));		
 
 		//dept hash update
 		$devSeq = $this->db->query('select last_insert_id() a')->row('a');
@@ -127,31 +102,34 @@ class Device extends CI_Model {
 		$query = "UPDATE js_device SET device_hash = ? where seq = ?";
 		$this->db->query($query,array($devHash,$devSeq));
 		
-		$this->responsePayload['status'] = SUCCESS;
-		$this->responsePayload['data'] = array("dev_hash"=>$devHash,"regid"=>$data['regid'],"uuid"=>$data['uuid']);
+		$this->responsePayload['status'] = STATUS::SUCCESS;
+		$this->responsePayload['data'][] = array(
+										KEY_DEVICE::IDX=>$devHash,
+										KEY_DEVICE::GCM_REGISTRATION_ID=>$data[0][KEY_DEVICE::GCM_REGISTRATION_ID],
+										KEY_DEVICE::UUID=>$data[0][KEY_DEVICE::UUID]);
 	}
 	
 	private function unregister() {
 	
 		$data = $this->requestPayload['data'];
 		
-		if( !isset($data['uuid']) || !isset($data['regid']) ||
-				!$data['uuid'] || !$data['regid'] ) {
+		if( !isset($data[0][KEY_DEVICE::UUID]) || !isset($data[0][KEY_DEVICE::GCM_REGISTRATION_ID]) ||
+				!$data[0][KEY_DEVICE::UUID] || !$data[0][KEY_DEVICE::GCM_REGISTRATION_ID] ) {
 				
-			$this->responsePayload['status'] = INSUFFICIENT_ARGUMENTS;
-			$this->responsePayload['data'] = 'Insufficient Informations';
+			$this->responsePayload['status'] = STATUS::INSUFFICIENT_ARGUMENTS;
+			$this->responsePayload['data'][] = array(KEY::RESPONSE_TEXT=>'Insufficient Informations');
 			return;
 		}
 		
 		$query = "select seq from js_device where uuid = ? and regid = ?";
-		if ( !$this->db->query($query,array($data['uuid'],$data['regid']))->row_array() ) {
-			$this->responsePayload['status'] = NO_DATA;
-			$this->responsePayload['data'] = "no data in table";
+		if ( !$this->db->query($query,array($data[0][KEY_DEVICE::UUID],$data[0][KEY_DEVICE::GCM_REGISTRATION_ID]))->row_array() ) {
+			$this->responsePayload['status'] = STATUS::NO_DATA;
+			$this->responsePayload['data'][] = array(KEY::RESPONSE_TEXT=>'no data in table');
 		} else {
 			$query = "delete from js_device where uuid = ? and regid = ?";
-			$this->db->query($query,array($data['uuid'],$data['regid']));
-			$this->responsePayload['status'] = SUCCESS;
-			$this->responsePayload['data'] = "success";
+			$this->db->query($query,array($data[0][KEY_DEVICE::UUID],$data[0][KEY_DEVICE::GCM_REGISTRATION_ID]));
+			$this->responsePayload['status'] = STATUS::SUCCESS;
+			$this->responsePayload['data'][] = array(KEY::RESPONSE_TEXT=>'success');
 		}
 	}
 	

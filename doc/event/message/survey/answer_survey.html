@@ -19,11 +19,11 @@
 			<ul>
 				<li>event / MESSAGE:SURVEY:ANSWER_SURVEY</li>
 				<li>data
-					<ul>
-						<li>user_hash	/	유저 해시</li>
-						<li>survey_hash	/	설문조사 seq 해시</li>
-						<li>answersheet	/	설문조사 응답 정보를 담고 있는 json object</li>
-					</ul>
+<pre>
+[ { "user_hash":유저 해쉬,
+	"survey_hash": 설문조사 해쉬,
+	"answersheet": 설문조사 정보 json object }]	
+</pre>
 				</li>
 			</ul>
 		</li>
@@ -33,7 +33,10 @@
 					<ul>
 						<li>event / MESSAGE:SURVEY:ANSWER_SURVEY</li>
 						<li>status / 1 (SUCCESS)</li>
-						<li>data / "success"
+						<li>data
+<pre>
+[{"msg":메세지}]
+</pre>
 						</li>
 					</ul>
 				</li>
