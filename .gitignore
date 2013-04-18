@@ -8,3 +8,4 @@
 .buildpath
 .settings/*
 doc/*
+doxygen/*
