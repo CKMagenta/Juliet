@@ -6,9 +6,19 @@ class Capulet extends CI_Controller {
 		parent::__construct();
 		$this->load->database();
 	}
+
+	public function test() {
+		$d = "234234";
+		
+		echo "<meta charset='utf-8'><pre>";
+		print_r(explode(":",$d));
+		echo "</pre>";
+		die();
+	}
 	
 	public function index() {
-		$query = 'select
+
+	$query = 'select
 					if(u.is_enabled,"승인","미승인") is_enabled,
 					user_hash,
 					user_name,

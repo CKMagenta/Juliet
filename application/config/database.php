@@ -48,40 +48,70 @@
 $active_group = 'default';
 $active_record = TRUE;
 
-if ( ENVIRONMENT == 'development' ) {
+if (defined('ENVIRONMENT'))
+{
+	switch (ENVIRONMENT)
+	{
+		case 'development':
+			$db['default']['hostname'] = 'localhost';
+			$db['default']['username'] = 'root';
+			$db['default']['password'] = '0515';
+			$db['default']['database'] = 'daondb';
+			$db['default']['dbdriver'] = 'mysql';
+			$db['default']['dbprefix'] = '';
+			$db['default']['pconnect'] = TRUE;
+			$db['default']['db_debug'] = TRUE;
+			$db['default']['cache_on'] = FALSE;
+			$db['default']['cachedir'] = '';
+			$db['default']['char_set'] = 'utf8';
+			$db['default']['dbcollat'] = 'utf8_general_ci';
+			$db['default']['swap_pre'] = '';
+			$db['default']['autoinit'] = TRUE;
+			$db['default']['stricton'] = FALSE;
+			break;
 
-	$db['default']['hostname'] = 'localhost';
-	$db['default']['username'] = 'root';
-	$db['default']['password'] = '0515';
-	$db['default']['database'] = 'daondb';
-	$db['default']['dbdriver'] = 'mysql';
-	$db['default']['dbprefix'] = '';
-	$db['default']['pconnect'] = TRUE;
-	$db['default']['db_debug'] = TRUE;
-	$db['default']['cache_on'] = FALSE;
-	$db['default']['cachedir'] = '';
-	$db['default']['char_set'] = 'utf8';
-	$db['default']['dbcollat'] = 'utf8_general_ci';
-	$db['default']['swap_pre'] = '';
-	$db['default']['autoinit'] = TRUE;
-	$db['default']['stricton'] = FALSE;
+		case 'testing':
+			$db['default']['hostname'] = 'localhost';
+			$db['default']['username'] = 'daondb';
+			$db['default']['password'] = 'ekdhsdb';
+			$db['default']['database'] = 'daondb';
+			$db['default']['dbdriver'] = 'mysql';
+			$db['default']['dbprefix'] = '';
+			$db['default']['pconnect'] = TRUE;
+			$db['default']['db_debug'] = TRUE;
+			$db['default']['cache_on'] = FALSE;
+			$db['default']['cachedir'] = '';
+			$db['default']['char_set'] = 'utf8';
+			$db['default']['dbcollat'] = 'utf8_general_ci';
+			$db['default']['swap_pre'] = '';
+			$db['default']['autoinit'] = TRUE;
+			$db['default']['stricton'] = FALSE;
+			break;
+		case 'production':
+			$db['default']['hostname'] = 'localhost';
+			$db['default']['username'] = 'daondb';
+			$db['default']['password'] = 'ekdhsdb';
+			$db['default']['database'] = 'daondb';
+			$db['default']['dbdriver'] = 'mysql';
+			$db['default']['dbprefix'] = '';
+			$db['default']['pconnect'] = TRUE;
+			$db['default']['db_debug'] = TRUE;
+			$db['default']['cache_on'] = FALSE;
+			$db['default']['cachedir'] = '';
+			$db['default']['char_set'] = 'utf8';
+			$db['default']['dbcollat'] = 'utf8_general_ci';
+			$db['default']['swap_pre'] = '';
+			$db['default']['autoinit'] = TRUE;
+			$db['default']['stricton'] = FALSE;
+			break;
+
+		default:
+			exit('The application environment is not set correctly.');
+	}
 } else {
-
-	$db['default']['hostname'] = 'localhost';
-	$db['default']['username'] = 'daondb';
-	$db['default']['password'] = 'ekdhsdb';
-	$db['default']['database'] = 'daondb';
-	$db['default']['dbdriver'] = 'mysql';
-	$db['default']['dbprefix'] = '';
-	$db['default']['pconnect'] = TRUE;
-	$db['default']['db_debug'] = TRUE;
-	$db['default']['cache_on'] = FALSE;
-	$db['default']['cachedir'] = '';
-	$db['default']['char_set'] = 'utf8';
-	$db['default']['dbcollat'] = 'utf8_general_ci';
-	$db['default']['swap_pre'] = '';
-	$db['default']['autoinit'] = TRUE;
-	$db['default']['stricton'] = FALSE;
+	exit('The application environment is not set.');
 }
+
+
 /* End of file database.php */
 /* Location: ./application/config/database.php */

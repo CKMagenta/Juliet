@@ -31,7 +31,7 @@ class Handler extends CI_Controller {
 	}
 	
 	public function index() {
-		$this->load->view('upload_test');
+		
 	}
 	
 	/**
@@ -41,6 +41,7 @@ class Handler extends CI_Controller {
 		
 		//페이로드 객체 as json
 		$requestPayloadJson = $this->input->get_post('payload',TRUE);
+		
 		$requestPayload = json_decode($requestPayloadJson,true);
 		
 		if ( !$requestPayload ) {

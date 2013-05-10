@@ -1,5 +1,7 @@
 <?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+
 date_default_timezone_set ("Asia/Seoul");
+
 /*
 |--------------------------------------------------------------------------
 | Base Site URL
@@ -15,11 +17,28 @@ date_default_timezone_set ("Asia/Seoul");
 |
 */
 
-if ( ENVIRONMENT == 'development') {
-	$config['base_url']	= 'http://localhost/juliet/';
+if (defined('ENVIRONMENT'))
+{
+	switch (ENVIRONMENT)
+	{
+		case 'development':
+			$config['base_url']	= 'http://localhost/juliet/';
+			break;
+
+		case 'testing':
+			$config['base_url']	= 'http://116.67.94.11:80/juliette/';
+			break;
+		case 'production':
+			$config['base_url']	= 'http://116.67.94.11:80/juliet/';
+			break;
+
+		default:
+			exit('The application environment is not set correctly.');
+	}
 } else {
-	$config['base_url']	= 'http://116.67.94.11:80/juliet/';//'http://116.67.94.11:9876/Projects/CI/';
+	exit('The application environment is not set.');
 }
+
 /*
 |--------------------------------------------------------------------------
 | Index File
@@ -110,7 +129,7 @@ $config['enable_hooks'] = FALSE;
 | http://codeigniter.com/user_guide/general/creating_libraries.html
 |
 */
-$config['subclass_prefix'] = 'MY_';
+$config['subclass_prefix'] = 'DAON_';
 
 
 /*
@@ -252,7 +271,7 @@ $config['sess_cookie_name']		= 'ci_session';
 $config['sess_expiration']		= 3600;
 $config['sess_expire_on_close']	= TRUE;
 $config['sess_encrypt_cookie']	= TRUE;
-$config['sess_use_database']	= FALSE;
+$config['sess_use_database']	= TRUE;
 $config['sess_table_name']		= 'ci_sessions';
 $config['sess_match_ip']		= FALSE;
 $config['sess_match_useragent']	= TRUE;

@@ -68,7 +68,6 @@ class User extends CI_Model {
 				on u.dept_seq = d.seq
 			where u.user_hash = ?";
 			$row = $this->db->query($query,$hashMap[KEY_USER::IDX])->row_array();
-				
 			if ( $row ) {
 				$row[KEY_USER::IS_ENABLED] = $row[KEY_USER::IS_ENABLED] == 1 ? true:false;
 			}
@@ -114,23 +113,32 @@ class User extends CI_Model {
 			return;
 		}
 
-		$query = "INSERT INTO `daondb`.`js_user`
-			(`user_name`,
-			`dept_seq`,
-			`user_rank`,
-			`user_role`,
-			`is_enabled`,
-			`created_ts`) values( ?, ?, ?, ?, 0, now())";
-		$this->db->query($query, array($data[0][KEY_USER::NAME],
+		$query = 'select user_hash from js_user where user_name = ? and dept_seq = ? and user_rank = ? and user_role = ?';
+		$user_hash = $this->db->query($query,array($data[0][KEY_USER::NAME],
 				$deptSeq,
-				$data[0][KEY_USER::RANK],$data[0][KEY_USER::ROLE]));
-		$user_seq = $this->db->query('select last_insert_id() a')->row('a');
-
-		$user_hash = md5('js_user'.$user_seq);
-
-		$query = "update js_user set user_hash = ? where seq = ?";
-		$this->db->query($query,array($user_hash,$user_seq));
-
+				$data[0][KEY_USER::RANK],$data[0][KEY_USER::ROLE]))->row('user_hash');
+		
+		if ( !$user_hash ) {
+		
+			$query = "INSERT INTO `daondb`.`js_user`
+				(`user_name`,
+				`dept_seq`,
+				`user_rank`,
+				`user_role`,
+				`is_enabled`,
+				`created_ts`) values( ?, ?, ?, ?, 0, now())";
+			$this->db->query($query, array($data[0][KEY_USER::NAME],
+					$deptSeq,
+					$data[0][KEY_USER::RANK],$data[0][KEY_USER::ROLE]));
+			$user_seq = $this->db->query('select last_insert_id() a')->row('a');
+	
+			$user_hash = md5('js_user'.$user_seq);
+	
+			$query = "update js_user set user_hash = ? where seq = ?";
+			$this->db->query($query,array($user_hash,$user_seq));
+			
+		}
+		
 		$this->responsePayload['status'] = STATUS::SUCCESS;
 		$this->responsePayload['data'][]
 				=

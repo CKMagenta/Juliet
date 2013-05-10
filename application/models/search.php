@@ -33,7 +33,7 @@ class Search extends CI_Model {
 				user_hash '.KEY_USER::IDX.' , 
 				user_name '.KEY_USER::NAME.' , 
 				dept_name '.KEY_DEPT::NAME.' , 
-				dept_full_name '.KEY_DEPT::FULL_NAME.' , 
+				trim(replace(dept_full_name,":"," ")) '.KEY_DEPT::FULL_NAME.' , 
 				user_role  '.KEY_USER::ROLE.' ,
 				user_rank '.KEY_USER::RANK.' 
 				from js_user u
