@@ -31,9 +31,7 @@ class Message extends CI_Model {
 	
 	public function act($handler,$eventAr,$requestPayload) {
 		$this->eventAr = $eventAr;
-		Handler::$requestPayload = $requestPayload;
-		Handler::$responsePayload = &Handler::$responsePayload;
-				
+		
 		//sub event별 분류
 		switch( $eventAr[1] ) {
 			case "SEND":
@@ -60,7 +58,6 @@ class Message extends CI_Model {
 						$model->answerSurvey();
 						break;
 					default:
-						//TODO
 						die();
 				}
 				
@@ -77,12 +74,13 @@ class Message extends CI_Model {
 					case "NOTIFY_LAST_READ_TS":
 						$model->updateLastReadTS();
 						break;
-					case "JOIN_ROOM":
+					case "INVITE":
+						$model->inviteUser();
 						break;
 					case "LEAVE_ROOM":
+						$model->leaveRoom();
 						break;
 					default:
-						//TODO
 						die();
 				}
 				break;
@@ -214,9 +212,9 @@ class Message extends CI_Model {
 		$curl .= ' -H "Content-Type: application/json"';
 		$curl .= ' http://android.googleapis.com/gcm/send';
 		$curl .= ' -d "'.$json.'"';
-		//echo json_encode($data);
-		//echo exec($curl ,null,$result = array());
-		exec($curl, $result);
+		
+		//exec($curl, $result);
+		$result = array(1);
 		return json_decode($result[0],true);
 	}
 	
@@ -249,7 +247,7 @@ class Message extends CI_Model {
 				$query = "select seq from js_document where doc_hash = ?";
 				$seq = $this->db->query($query,array($data[0][KEY_MESSAGE::IDX]))->row('seq');
 				$query = "select 
-		CX					b.user_hash ".KEY_USER::IDX."
+							b.user_hash ".KEY_USER::IDX."
 						from js_document_receiver a
 						left join js_user b
 							on a.receiver_seq = b.seq
@@ -383,6 +381,7 @@ class ChatModel extends Message {
 		$host_hash = $room_info[KEY_USER::IDX];
 
 		$host_seq = $this->db->query('select seq from js_user where user_hash = ? ', $host_hash)->row('seq');
+		
 		$query = "insert into js_room(room_hash, room_type, room_host_seq) values(?,?,?)";
 		$this->db->query($query,array($room_hash,$room_type,$host_seq));
 		
@@ -400,7 +399,7 @@ class ChatModel extends Message {
 				return;
 			} 
 			
-			$query .= "(?, ?, date_sub(now(),interval -10 minutes)),";
+			$query .= "(?, ?, date_sub(now(),interval -10 minute)),";
 			$binds[] = $room_hash;
 			$binds[] = $user_seq;
 		}
@@ -411,55 +410,145 @@ class ChatModel extends Message {
 		return;
 	}
 	
-	public function joinRoom($sender_seq, $chat) {
+	public function inviteUser() {
+		$input = Handler::$requestPayload['data'][0];
 		
-		$newbiestr = $chat[KEY_MESSAGE::CONTENT];
-		$newbies = explode(":",$newbiestr);
-		 
-		$room_hash = $chat[KEY_CHAT::ROOM_CODE];
+		$new_members = $input[KEY_CHAT::ROOM_MEMBER];
+		$room_code = $input[KEY_CHAT::ROOM_CODE];
+		$inviter = $input[KEY_USER::IDX];
+		
+		if (count($new_members)==0)
+		{
+			return;
+		}
+		
+		$query = "select regid from js_device d where user_seq in (select user_seq from js_room_chatter where room_hash = ? and user_seq != ?)";
+		$result = $this->db->query($query,array($room_code,$inviter))->result_array();
+		
+		$regIds = array();
+		foreach ($result as $row)
+		{
+			$regIds[] = $row['regid'];
+		}
+		
+		$gcmPayload = array(
+				"event"=>"PUSH:USER_JOIN_ROOM",
+				"data"=>array(
+						array(
+							KEY_CHAT::ROOM_CODE=>$room_code,
+							KEY_USER::IDX=>$inviter,
+							KEY_CHAT::ROOM_MEMBER=>$new_members
+				)
+			)
+		);
+		
+		$packet = array('payload'=>$gcmPayload);
+		$this->_gcmMessage(GCM_API_KEY, $regIds, $packet);
+		
 		$query = "insert into js_room_chatter (room_hash, user_seq, last_read_ts)
 				values ";
 		$binds = array();
-		foreach ( $newbies as $newbie ) {
+		foreach ( $new_members as $newbie ) {
 			$query .= "(?, ?, now()),";
-			$binds[] = $room_hash;
+			$binds[] = $room_code;
 			$binds[] = $this->db->query('select seq from js_user where user_hash = ? ',$newbie)->row('seq');
 			
 		}
 		$query = substr_replace($query,"",-1,1);
+		$query .= " on duplicate key update user_seq = user_seq";
 		$this->db->query($query,$binds);
+		
+		Handler::$responsePayload['status'] = STATUS::SUCCESS;
+		Handler::$responsePayload['data'][] = array(KEY::RESPONSE_TEXT=>"successful");
 	}
 	
-	public function leaveRoom($sender_seq, $chat) {
-		$input = $chat;
-		$user_seq = $sender_seq;
+	public function leaveRoom() {
+		$room_code = Handler::$requestPayload['data'][0][KEY_CHAT::ROOM_CODE];
+		$user_idx = Handler::$requestPayload['data'][0][KEY_USER::IDX];
 		
+		$user_seq = $this->db->query("SELECT seq FROM js_user WHERE user_hash = ?",$user_idx)->row('seq');
 		
-		$subType = $input[KEY_MESSAGE::TYPE]; 
-		if ( $subType == TYPE_MEETING ) {
-			$query = "delete from js_room_chatter where room_hash = ? and user_seq = ?";
-			$this->db->query($query,array($input[KEY_CHAT::ROOM_CODE], $user_seq));
-
-			$query = "select count(seq)=0 is_empty from js_room_chatter where room_hash = ?";
-			$is_empty = $this->db->query($query,$input[KEY_CHAT::ROOM_CODE])->row('is_empty');
-			if ( $is_empty ) {
-				$query = "delete from js_room where room_hash = ?";
-				$this->db->query($query,$input[KEY_CHAT::ROOM_CODE]);
-			}
-		} else {
-			$query = " select room_host_seq from js_room where room_hash = ?";
-			$host_seq = $this->db->query($query,$input[KEY_CHAT::ROOM_CODE])->row('room_host_seq');
+		$query = "SELECT room_type, room_host_seq FROM js_room WHERE room_hash = ?";
+		$result = $this->db->query($query,array($room_code))->row_array();
+		
+		$host_seq = $result['room_host_seq'];
+		$room_type = $result['room_type'];
+		$regIds = array();
+		if($room_type==TYPE_MEETING)
+		{
+			$query = "DELETE FROM js_room_chatter WHERE room_hash = ? AND user_seq = ?";
+			$this->db->query($query,array($room_code, $user_seq));
 			
-			if ( $host_seq == $user_seq ) {
-				$query = "delete from js_room_chatter where room_hash = ?";
-				$this->db->query($query,$input[KEY_CHAT::ROOM_CODE]);
-				$query = "delete from js_room where room_hash = ?";
-				$this->db->query($query,$input[KEY_CHAT::ROOM_CODE]);
-			} else {
-				$query = "delete from js_room_chatter where room_hash = ? and user_seq = ?";
-				$this->db->query($query,array($input[KEY_CHAT::ROOM_CODE], $user_seq));
+			$query = "SELECT count(seq) as num_chatters FROM js_room_chatter WHERE room_hash = ?";
+			$num_chatters = $this->db->query($query,$room_code)->row('num_chatters');
+			if ($num_chatters==0)
+			{
+				$query = "DELETE FROM js_room WHERE room_hash = ?";
+				$this->db->query($query,$room_code);
+			}
+			else
+			{
+				$query = "SELECT regid FROM js_device WHERE user_seq IN ( SELECT user_seq FROM js_room_chatter WHERE room_hash = ? AND user_seq != ? )";
+				$result = $this->db->query($query,array($room_code,$host_seq))->result_array();
+				
+				foreach ($result as $row)
+				{
+					$regIds[] = $row['regid'];
+				}
 			}
 		}
+		else
+		{
+			if ($user_seq == $host_seq)
+			{
+				$query = "SELECT regid FROM js_device WHERE user_seq IN ( SELECT user_seq FROM js_room_chatter WHERE room_hash = ? AND user_seq != ? )";
+				$result = $this->db->query($query,array($room_code,$host_seq))->result_array();
+				
+				foreach ($result as $row)
+				{
+					$regIds[] = $row['regid'];
+				}
+				
+				$query = "DELETE FROM js_room_chatter WHERE room_hash = ?";
+				$this->db->query($query,$room_code);
+				$query = "DELETE FROM js_room WHERE room_hash = ?";
+				$this->db->query($query,$room_code);
+			}
+			else
+			{
+				$query = "DELETE FROM js_room_chatter WHERE room_hash = ? AND user_seq = ?";
+				$this->db->query($query,array($room_code, $user_seq));
+				
+				$query = "SELECT count(seq) as num_chatters FROM js_room_chatter WHERE room_hash = ?";
+				$num_chatters = $this->db->query($query,$room_code)->row('num_chatters');
+				if ($num_chatters==0)
+				{
+					$query = "DELETE FROM js_room WHERE room_hash = ?";
+					$this->db->query($query,$room_code);
+				}
+				
+				$query = "SELECT regid FROM js_device WHERE user_seq = ?";
+				$result = $this->db->query($query,$host_seq)->row_array();
+				$regIds = array($result['regid']);
+			}
+		}
+		
+		if (count($regIds) > 0)
+		{
+			$payload = array(
+					'event'=>'PUSH:USER_LEAVE_ROOM',
+					'data'=>array(
+							KEY_CHAT::ROOM_CODE		=>	$room_code,
+							KEY_USER::IDX			=>	$user_idx
+					)
+			);
+			
+			$send_result = $this->_gcmMessage(GCM_API_KEY, $regIds, array('payload'=>$payload));
+		}
+		
+		
+		Handler::$responsePayload['status'] = STATUS::SUCCESS;
+		Handler::$responsePayload['data'][] = array(KEY::RESPONSE_TEXT=>"successful");
 	}
 	
 	public function updateLastReadTS(){
@@ -525,7 +614,7 @@ class ChatModel extends Message {
 		return;
 	}
 	
-	public function pullLastReadTS(){
+	public function pullLastReadTS() {
 		$room_info = Handler::$requestPayload['data'][0];
 		
 		if ( !isset($room_info[KEY_CHAT::ROOM_CODE]) || !$room_info[KEY_CHAT::ROOM_CODE] ) {
@@ -535,15 +624,53 @@ class ChatModel extends Message {
 		}
 		
 		$room_hash = $room_info[KEY_CHAT::ROOM_CODE];
+		$user_idx = $room_info[KEY_USER::IDX];
+		
 		$query = "select 
 					user_hash ".KEY_USER::IDX.", 
 					unix_timestamp(last_read_ts) ".KEY_CHAT::LAST_READ_TS."
 				from js_room_chatter c left join js_user u on u.seq = c.user_seq
-				where c.room_hash = ?";
-		$result = $this->db->query($query,$room_hash)->result_array();
+				where c.room_hash = ? and u.user_hash != ?";
+		$result = $this->db->query($query,array($room_hash, $user_idx))->result_array();
 		
 		Handler::$responsePayload['status'] = STATUS::SUCCESS;
 		Handler::$responsePayload['data'] = $result;
+	}
+	
+	public function notifyLastReadTS()
+	{
+		$info = Handler::$requestPayload['data'][0];
+		$room_code = $info[KEY_CHAT::ROOM_CODE];
+		$user_idx = $info[KEY_USER::IDX];
+		$last_read_ts = $info[KEY_CHAT::LAST_READ_TS];
+		
+		$user_seq = $this->db->query('SELECT seq FROM js_user WHERE user_hash = ?',$user_idx)->row('seq');
+				
+		$query = 'UPDATE js_room_chatter SET last_read_ts = from_unixtime(?) WHERE room_hash = ? AND user_seq = ?';
+		$this->db->query($query,array($last_read_ts, $room_code, $user_seq));
+		
+		$query = 'SELECT regid FROM js_device WHERE user_seq in (SELECT user_seq FROM js_room_chatter WHERE room_hash = ? AND user_seq != ?)';
+		$result = $this->db->query($query,array($room_code, $user_seq))->result_array();
+		
+		$regIds = array();
+		foreach ($result as $row)
+		{
+			$regIds[] = $row['regid'];
+		}
+		
+		$payload = array(
+					'event'=>'PUSH:UPDATE_LAST_READ_TS', 
+					'data'=>array(
+							KEY_CHAT::LAST_READ_TS	=>	$last_read_ts,
+							KEY_CHAT::ROOM_CODE		=>	$room_code,
+							KEY_USER::IDX			=>	$user_idx
+							)
+				);
+		
+		$send_result = $this->_gcmMessage(GCM_API_KEY, $regIds, array('payload'=>$payload));
+		
+		Handler::$responsePayload['status'] = STATUS::SUCCESS;
+		Handler::$responsePayload['data'][] = array(KEY::RESPONSE_TEXT=>"successful");
 	}
 }
 

@@ -43,7 +43,7 @@ class Handler extends CI_Controller {
 		$requestPayloadJson = $this->input->get_post('payload',TRUE);
 		
 		$requestPayload = json_decode($requestPayloadJson,true);
-		
+
 		if ( !$requestPayload ) {
 			
 			self::$responsePayload['event'] = NULL;
