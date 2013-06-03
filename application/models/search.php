@@ -39,7 +39,7 @@ class Search extends CI_Model {
 				from js_user u
 				left join js_department d
 					on u.dept_seq = d.seq
-				where user_name like ? and user_status = 1';
+				where user_name like ?';
 		$result = $this->db->query($query,'%'.$q.'%')->result_array();
 		
 		foreach ( $result as $key=>$row ) {

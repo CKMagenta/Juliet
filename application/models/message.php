@@ -213,9 +213,28 @@ class Message extends CI_Model {
 		$curl .= ' http://android.googleapis.com/gcm/send';
 		$curl .= ' -d "'.$json.'"';
 		
-		//exec($curl, $result);
-		$result = array(1);
-		return json_decode($result[0],true);
+		exec($curl, $result);
+		
+		$sendResult = json_decode($result[0],true);
+		
+		$this->handleResult($regids, $sendResult);
+		
+		return $sendResult;
+	}
+	
+	private function handleResult($regids, $sendResult)
+	{
+		if ($sendResult['canonical_ids'] > 0)
+		{
+			foreach( $sendResult['results'] as $key=>$result )
+			{
+				if (array_key_exists('registration_id', $result))
+				{
+					$new_regid = $result['registration_id'];
+					$this->db->query('update js_device set regid = ? where regid = ?',array($new_regid,$regids[$key]));
+				}
+			}
+		}
 	}
 	
 	private function getUncheckers() {
@@ -233,16 +252,6 @@ class Message extends CI_Model {
 		
 		//메세지 타입 별로 각자 다른 테이블에 로깅
 		switch($mType) {
-			case MESSAGE_TYPE_CHAT :
-				$query = "select seq from js_chat where chat_hash = ?";
-				$seq = $this->db->query($query,array($data[0][KEY_MESSAGE::IDX]))->row('seq');
-				$query = "select 
-							b.user_hash ".KEY_USER::IDX."
-						from js_chat_receiver a
-						left join js_user b
-							on a.receiver_seq = b.seq
-						where a.chat_seq = ?";
-				break;
 			case MESSAGE_TYPE_DOCUMENT :
 				$query = "select seq from js_document where doc_hash = ?";
 				$seq = $this->db->query($query,array($data[0][KEY_MESSAGE::IDX]))->row('seq');
@@ -296,13 +305,6 @@ class Message extends CI_Model {
 		}
 		
 		switch($messageType) {
-			case MESSAGE_TYPE_CHAT:
-				$q = 'select seq from js_chat where chat_hash = ?';
-				$msgSeq = $this->db->query($q,$data[0][KEY_MESSAGE::IDX])->row('seq');
-				$tableName = 'js_chat_receiver';				
-				$sql = 'UPDATE `' . $tableName . '` SET is_checked= 1  , checked_ts = now() WHERE chat_seq = '.$msgSeq.' AND receiver_seq='. $userSeq ;
-				break;
-	
 			case MESSAGE_TYPE_DOCUMENT:
 				$q = 'select seq from js_document where document_hash = ?';
 				$msgSeq = $this->db->query($q,$data[0][KEY_MESSAGE::IDX])->row('seq');
@@ -387,8 +389,8 @@ class ChatModel extends Message {
 		
 		$query = 
 			"insert into js_room_chatter (room_hash, user_seq, last_read_ts)
-				values ";
-		$binds = array();
+				values (?, ?, now()),";
+		$binds = array($room_hash,$host_seq);
 		foreach( $room_member as $member ) 
 		{
 			$user_seq = $this->db->query('select seq from js_user where user_hash = ?',$member)->row('seq');
@@ -399,7 +401,7 @@ class ChatModel extends Message {
 				return;
 			} 
 			
-			$query .= "(?, ?, date_sub(now(),interval -10 minute)),";
+			$query .= "(?, ?, now()),";
 			$binds[] = $room_hash;
 			$binds[] = $user_seq;
 		}
@@ -421,9 +423,9 @@ class ChatModel extends Message {
 		{
 			return;
 		}
-		
+		$inviter_seq = $this->db->query("select seq from js_user where user_hash = ?",$inviter)->row('seq');
 		$query = "select regid from js_device d where user_seq in (select user_seq from js_room_chatter where room_hash = ? and user_seq != ?)";
-		$result = $this->db->query($query,array($room_code,$inviter))->result_array();
+		$result = $this->db->query($query,array($room_code,$inviter_seq))->result_array();
 		
 		$regIds = array();
 		foreach ($result as $row)
@@ -488,8 +490,8 @@ class ChatModel extends Message {
 			}
 			else
 			{
-				$query = "SELECT regid FROM js_device WHERE user_seq IN ( SELECT user_seq FROM js_room_chatter WHERE room_hash = ? AND user_seq != ? )";
-				$result = $this->db->query($query,array($room_code,$host_seq))->result_array();
+				$query = "SELECT regid FROM js_device WHERE user_seq IN ( SELECT user_seq FROM js_room_chatter WHERE room_hash = ? )";
+				$result = $this->db->query($query,array($room_code))->result_array();
 				
 				foreach ($result as $row)
 				{
@@ -537,10 +539,10 @@ class ChatModel extends Message {
 		{
 			$payload = array(
 					'event'=>'PUSH:USER_LEAVE_ROOM',
-					'data'=>array(
+					'data'=>array(array(
 							KEY_CHAT::ROOM_CODE		=>	$room_code,
 							KEY_USER::IDX			=>	$user_idx
-					)
+					))
 			);
 			
 			$send_result = $this->_gcmMessage(GCM_API_KEY, $regIds, array('payload'=>$payload));
@@ -559,8 +561,15 @@ class ChatModel extends Message {
 		$query = "update js_room_chatter set last_read_ts = from_unixtime(?) where room_hash= ? and user_seq = ?";
 		$this->db->query($query,array($last_read_ts, $input[KEY_CHAT::ROOM_CODE],$user_seq));
 		
-		Handler::$requestPayload['data'][0][KEY_CHAT::LAST_READ_TS] = $last_read_ts;
-		$data = array( 'payload'=>Handler::$requestPayload );
+		$payload = array(
+				'event'=>'PUSH:UPDATE_LAST_READ_TS',
+				'data'=>array(array(
+						KEY_CHAT::LAST_READ_TS=>$last_read_ts,
+						KEY_CHAT::ROOM_CODE=>$input[KEY_CHAT::ROOM_CODE],
+						KEY_USER::IDX=>$input[KEY_USER::IDX]
+						))
+				);
+		$data = array( 'payload'=>$payload );
 		
 		$query = "select room_type from js_room where room_hash = ? ";
 		$room_type = $this->db->query($query,$input[KEY_CHAT::ROOM_CODE])->row('room_type');
@@ -568,14 +577,15 @@ class ChatModel extends Message {
 		if ( $room_type == TYPE_MEETING ) {
 			$regIds = array();
 			
-			$query = "select regid from js_device where user_seq in ( select user_seq from js_room_chatter where room_hash = ? )";
-			$result = $this->db->query($query,$input[KEY_CHAT::ROOM_CODE])->result_array();
+			$query = "select regid from js_device where user_seq in ( select user_seq from js_room_chatter where room_hash = ? and user_seq != ?)";
+			$result = $this->db->query($query,array($input[KEY_CHAT::ROOM_CODE],$user_seq))->result_array();
 			
 			foreach ( $result as $row ) {
 				$regIds[] = $row['regid'];
 			}
 			
 			$result = $this->_gcmMessage(GCM_API_KEY, $regIds, $data);
+			
 		} else {
 			
 			$query = "select room_host_seq from js_room where room_hash = ? ";
@@ -981,7 +991,7 @@ class SurveyModel extends Message {
 	
 	public function answerSurvey() {
 		$answer_sheet = Handler::$requestPayload['data'][0][KEY_SURVEY::ANSWER_SHEET];
-		$survey_hash = Handler::$requestPayload['data'][0][KEY_SURVEY::IDX];
+		$survey_hash = Handler::$requestPayload['data'][0][KEY_MESSAGE::IDX];
 		$survey_seq = $this->db->query('select seq from js_survey where survey_hash = ?',$survey_hash)->row('seq');
 		$user_hash = Handler::$requestPayload['data'][0][KEY_USER::IDX];
 		$user_seq = $this->db->query('select seq from js_user where user_hash = ?',$user_hash)->row('seq');

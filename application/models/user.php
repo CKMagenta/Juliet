@@ -70,9 +70,22 @@ class User extends CI_Model {
 			$row = $this->db->query($query,$hashMap[KEY_USER::IDX])->row_array();
 			if ( $row ) {
 				$row[KEY_USER::IS_ENABLED] = $row[KEY_USER::IS_ENABLED] == 1 ? true:false;
+				$this->responsePayload['data'][] = $row;
 			}
-				
-			$this->responsePayload['data'][] = $row;
+			else
+			{
+				$this->responsePayload['data'][] = array(
+						KEY_USER::IDX=>"nulluseridx",
+						KEY_USER::NAME=>"(탈퇴한 회원)",
+						KEY_DEPT::IDX=>"",
+						KEY_DEPT::FULL_NAME=>"",
+						KEY_DEPT::NAME=>"",
+						KEY_USER::RANK=>"11",
+						KEY_USER::ROLE=>"",
+						KEY_USER::IS_ENABLED=>1
+						);
+			}
+			
 		}
 
 		$this->responsePayload['status'] = STATUS::SUCCESS;
@@ -89,14 +102,14 @@ class User extends CI_Model {
 				c.dept_name ".KEY_DEPT::NAME.",
 				trim(replace(c.dept_full_name,':',' '))  ".KEY_DEPT::FULL_NAME.",
 				c.dept_code ".KEY_DEPT::SEQUENCE.",
-				p.dept_hash as parent_hash ".KEY_DEPT::PARENT_IDX."
+				p.dept_hash ".KEY_DEPT::PARENT_IDX."
 				from js_department c
 				left join js_department p
 					on c.parent_seq = p.seq
 				where c.dept_hash = ? and c.is_enabled = 1";
 			$row = $this->db->query($query,$hashMap[KEY_DEPT::IDX])->row_array();
 				
-			$this->responsePayload['data'][] = $res;
+			$this->responsePayload['data'][] = $row;
 		}
 
 		$this->responsePayload['status'] = STATUS::SUCCESS;
@@ -188,7 +201,7 @@ class User extends CI_Model {
 	private function getMembers() {
 		$data = $this->requestPayload['data'];
 
-		if ( !isset($data[0][KEY_DEPT::IDX]) || !isset($data[0][KEY_DEPT::FETCH_RECURSIVE]) || !$data[0][KEY_DEPT::IDX] ) {
+		if ( !isset($data[0][KEY_DEPT::IDX]) || !isset($data[0][KEY_DEPT::FETCH_RECURSIVE]) ) {
 			$this->responsePayload['status'] = STATUS::INSUFFICIENT_ARGUMENTS;
 			$this->responsePayload['data'][] = array( KEY::RESPONSE_TEXT => 'Insufficient Informations' );
 			return;
@@ -197,17 +210,34 @@ class User extends CI_Model {
 		$deptSeq = $this->db->query('select seq from js_department where dept_hash = ?',$data[0][KEY_DEPT::IDX])->row('seq');
 
 		if ( $data[0][KEY_DEPT::FETCH_RECURSIVE] ) {
-				
-			$query = "select
+
+			if ($data[0][KEY_DEPT::IDX] == null || $data[0][KEY_DEPT::IDX] == "")
+			{
+				$query = "select
+						user_hash ".KEY_USER::IDX.",
+						user_name ".KEY_USER::NAME.",
+						user_rank ".KEY_USER::RANK.",
+						d.dept_hash ".KEY_DEPT::IDX.",		
+						user_role ".KEY_USER::ROLE."
+						from js_user u
+						left join js_department d
+						on u.dept_seq = d.seq
+								where u.is_enabled = 1";
+			}
+			else
+			{
+				$query = "select
 						user_hash ".KEY_USER::IDX.",
 						user_name ".KEY_USER::NAME.",
 						user_rank ".KEY_USER::RANK.",
 						user_role ".KEY_USER::ROLE."
-						from js_user u
-						left join js_department d
-							on u.dept_seq = d.seq
-						where dept_full_path like '%:{$deptSeq}:%' and u.is_enabled = 1
-						order by user_rank, user_name";
+					from js_user u
+					left join js_department d
+					on u.dept_seq = d.seq
+					where dept_full_path like '%:{$deptSeq}:%' and u.is_enabled = 1
+					order by user_rank, user_name";
+			}
+
 			$res = $this->db->query($query)->result_array();
 				
 	} else {
