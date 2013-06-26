@@ -165,7 +165,7 @@ class KEY_SURVEY {
 	
 	const OPEN_TS = "Survey_openTS";
 	const CLOSE_TS = "Survey_closeTS";
-	
+	const IS_RESULT_PUBLIC = "Survey_isResultPublic";
 	const FORM = "Survey_form";
 	const QUESTIONS ="questions";
 	const IS_MULTIPLE ="Question_isMultiple";
@@ -174,12 +174,12 @@ class KEY_SURVEY {
 	const OPTIONS = "Question_options";
 	
 	const ANSWER_SHEET ="answerSheet";
-	const NUM_RECEIVERS = "numReceivers";
-	const NUM_UNCHECKERS = "numUnCheckers";
-	const NUM_CHECKERS = "numCheckers";
-	const NUM_RESPONDERS = "numResponders";
-	const NUM_GIVE_UP = "numGiveUp";
-	const RESULT = "result";
+	const NUM_RECEIVERS = "Survey_numReceivers";
+	const NUM_UNCHECKERS = "Survey_numUncheckers";
+	const NUM_CHECKERS = "Survey_numCheckers";
+	const NUM_RESPONDERS = "Survey_numResponders";
+	const NUM_GIVE_UP = "Survey_numGiveUp";
+	const RESULT = "Survey_result";
 }
 
 class KEY_USER {

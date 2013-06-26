@@ -6,15 +6,6 @@ class Capulet extends CI_Controller {
 		parent::__construct();
 		$this->load->database();
 	}
-
-	public function test() {
-		$d = "234234";
-		
-		echo "<meta charset='utf-8'><pre>";
-		print_r(explode(":",$d));
-		echo "</pre>";
-		die();
-	}
 	
 	public function index() {
 
@@ -33,6 +24,10 @@ class Capulet extends CI_Controller {
 				left join js_user_rank r
 					on r.seq = u.user_rank';
 		$users = $this->db->query($query)->result_array();
+		$query = 'select b.seq, user_name, content, from_unixtime(b.created_ts) from js_bug_report b 
+				left join js_user u on u.user_hash = b.user_idx where b.is_open=1 order by b.created_ts desc
+				';
+		$bugs=  $this->db->query($query)->result_array();
 		$this->load->view('admin/auth',get_defined_vars());
 	}
 	
@@ -145,5 +140,14 @@ class Capulet extends CI_Controller {
 			$where = ' where d'.$current_depth.'.seq is not null ';
 			
 		}
+	}
+	
+	public function delete_bug_report()
+	{
+		$seq = $this->input->post('seq',TRUE);
+		if(!$seq) return;
+		$this->load->database();
+		$query = 'update js_bug_report set is_open = 0 where seq = ?';
+		$this->db->query($query,$seq);
 	}
 }

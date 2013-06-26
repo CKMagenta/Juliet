@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>사용자 및 기기인증</title>
+	<title>임시 관리자 페이지</title>
 	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" ></script>
 	<script type="text/javascript" src="/juliet/static/bootstrap/js/bootstrap.min.js"></script>
 	<link rel="stylesheet" type="text/css" href="/juliet/static/bootstrap/css/bootstrap-responsive.css">
@@ -99,7 +99,18 @@ $(document).ready(function(){
 		return false;
 	});
 
-	
+	$(".delete-btn").click(function(){
+		var seq = $(this).parent().parent().attr('id');
+		$.ajax({
+			url :'http://116.67.94.11/juliet/index.php/capulet/delete_bug_report',
+			'type':'post',
+			'data':{"seq":seq},
+			'success':function(){
+				
+				location.reload();
+			}
+		});
+	});
 });
 </script>
 </head>
@@ -172,6 +183,35 @@ $(document).ready(function(){
 							<i class=\"icon-folder-open\"></i> show</a>
 							</td>";
 					echo "</tr>";
+				}
+				?>
+				</tbody>
+				</table>
+			</div>
+			
+			<div class="row-fluid">
+				<table class="table table-condensed table-striped table-bordered table-hover">
+				<caption>버그리포트 </caption>
+				<thead>
+					<tr>
+						<th></th>
+						<th>리포터</th>
+						<th>내용</th>
+						<th>시간</th>
+						<th></th>
+					</tr>
+				</thead>
+				
+				<tbody>
+				<?php 
+				foreach ( $bugs as $b ) {
+	
+					echo "<tr id='{$b['seq']}'>";
+					foreach($b as $bb)
+						echo "<td>$bb</td>";
+						
+					
+					echo "<td><button type='button' class='delete-btn'>삭제</button></td></tr>";
 				}
 				?>
 				</tbody>

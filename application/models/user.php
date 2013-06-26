@@ -41,6 +41,9 @@ class User extends CI_Model {
 			case "GET_PROFILE_IMG":
 				$this->getProfileImg();
 				break;
+			case "BUG_REPORT":
+				$this->bugReport();
+				break;
 			default:
 				echo "invalid event";
 				return;
@@ -209,6 +212,8 @@ class User extends CI_Model {
 
 		$deptSeq = $this->db->query('select seq from js_department where dept_hash = ?',$data[0][KEY_DEPT::IDX])->row('seq');
 
+		$user_idx = isset($data[0][KEY_USER::IDX])?$data[0][KEY_USER::IDX] : 'none';
+		
 		if ( $data[0][KEY_DEPT::FETCH_RECURSIVE] ) {
 
 			if ($data[0][KEY_DEPT::IDX] == null || $data[0][KEY_DEPT::IDX] == "")
@@ -222,7 +227,7 @@ class User extends CI_Model {
 						from js_user u
 						left join js_department d
 						on u.dept_seq = d.seq
-								where u.is_enabled = 1";
+								where u.is_enabled = 1 and u.user_hash != ?";
 			}
 			else
 			{
@@ -234,28 +239,38 @@ class User extends CI_Model {
 					from js_user u
 					left join js_department d
 					on u.dept_seq = d.seq
-					where dept_full_path like '%:{$deptSeq}:%' and u.is_enabled = 1
+					where dept_full_path like '%:{$deptSeq}:%' and u.is_enabled = 1 and u.user_hash != ? 
 					order by user_rank, user_name";
 			}
 
-			$res = $this->db->query($query)->result_array();
+			$res = $this->db->query($query,$user_idx)->result_array();
 				
-	} else {
-			
-		$query = "select
-						user_hash ".KEY_USER::IDX.",
-						user_name ".KEY_USER::NAME.",
-						user_rank ".KEY_USER::RANK.",
-						user_role ".KEY_USER::ROLE."
-					from js_user
-					where dept_seq = ? and is_enabled = 1
-					order by user_rank, user_name";
-		$res = $this->db->query($query,$deptSeq)->result_array();
-			
+		} else {
+				
+			$query = "select
+							user_hash ".KEY_USER::IDX.",
+							user_name ".KEY_USER::NAME.",
+							user_rank ".KEY_USER::RANK.",
+							user_role ".KEY_USER::ROLE."
+						from js_user
+						where dept_seq = ? and is_enabled = 1 and user_hash != ?
+						order by user_rank, user_name";
+			$res = $this->db->query($query,array($deptSeq, $user_idx))->result_array();
+		}
+	
+		$this->responsePayload['status'] = STATUS::SUCCESS;
+		$this->responsePayload['data'] = $res;
 	}
-
-	$this->responsePayload['status'] = STATUS::SUCCESS;
-	$this->responsePayload['data'] = $res;
+	
+	private function bugReport() {
+		$data = $this->requestPayload['data'];
+		$idx = $data[0][KEY_USER::IDX];
+		$content = $data[0][KEY_MESSAGE::CONTENT];
+		$ts = $data[0][KEY_MESSAGE::CREATED_TS];
+		$query = 'insert into js_bug_report(user_idx, content, created_ts) values(?,?,?)';
+		$this->db->query($query,array($idx,$content,$ts));
+		$this->responsePayload['status'] = STATUS::SUCCESS;
+		$this->responsePayload['data'] = $res;
 	}
 }
 

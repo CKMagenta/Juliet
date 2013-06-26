@@ -161,7 +161,7 @@ class Message extends CI_Model {
 		$sendResult = "";
 		if ( count($regIdArray) > 0 ) {
 			$gcmpayload = array(
-					'event'=>'MESSAGE:RECEIVED',
+					'event'=>'PUSH:MESSAGE',
 					'status'=>STATUS::SUCCESS,
 					'data'=>array(
 							array(KEY::_MESSAGE=>$msg)
@@ -247,11 +247,10 @@ class Message extends CI_Model {
 			Handler::$responsePayload['data'][] = array(KEY::RESPONSE_TEXT=>'Insufficient Informations');
 			return;
 		}
-		$messageType = floor($data[0][KEY_MESSAGE::TYPE]% MESSAGE_TYPE_DIVIDER);
-		$mType = floor($data[0][KEY_MESSAGE::TYPE] / MESSAGE_TYPE_DIVIDER);
+		$messageType = floor($data[0][KEY_MESSAGE::TYPE]/MESSAGE_TYPE_DIVIDER);
+		$mType = floor($data[0][KEY_MESSAGE::TYPE] % MESSAGE_TYPE_DIVIDER);
 		
-		//메세지 타입 별로 각자 다른 테이블에 로깅
-		switch($mType) {
+		switch($messageType) {
 			case MESSAGE_TYPE_DOCUMENT :
 				$query = "select seq from js_document where doc_hash = ?";
 				$seq = $this->db->query($query,array($data[0][KEY_MESSAGE::IDX]))->row('seq');
@@ -260,7 +259,7 @@ class Message extends CI_Model {
 						from js_document_receiver a
 						left join js_user b
 							on a.receiver_seq = b.seq
-						where a.doc_seq = ?";
+						where a.doc_seq = ? and a.is_checked = 0";
 				break;
 			case MESSAGE_TYPE_SURVEY :
 				$query = "select seq from js_survey where survey_hash = ?";
@@ -270,7 +269,7 @@ class Message extends CI_Model {
 						from js_survey_receiver a
 						left join js_user b
 							on a.receiver_seq = b.seq
-						where a.survey_seq = ?";
+						where a.survey_seq = ? and a.is_checked = 0";
 				break;
 		}
 		
@@ -423,29 +422,55 @@ class ChatModel extends Message {
 		{
 			return;
 		}
-		$inviter_seq = $this->db->query("select seq from js_user where user_hash = ?",$inviter)->row('seq');
-		$query = "select regid from js_device d where user_seq in (select user_seq from js_room_chatter where room_hash = ? and user_seq != ?)";
-		$result = $this->db->query($query,array($room_code,$inviter_seq))->result_array();
 		
-		$regIds = array();
-		foreach ($result as $row)
+		$query = 'select room_host_seq, room_type from js_room where room_hash = ?';
+		$room = $this->db->query($query,array($room_code))->row_array();
+		
+		if (!$room)
 		{
-			$regIds[] = $row['regid'];
+			Handler::$responsePayload['status'] = STATUS::NO_DATA;
+			Handler::$responsePayload['data'][] = array(KEY::RESPONSE_TEXT=>"no room ");
+			return;
 		}
 		
-		$gcmPayload = array(
-				"event"=>"PUSH:USER_JOIN_ROOM",
-				"data"=>array(
-						array(
-							KEY_CHAT::ROOM_CODE=>$room_code,
-							KEY_USER::IDX=>$inviter,
-							KEY_CHAT::ROOM_MEMBER=>$new_members
-				)
-			)
-		);
+		$inviter_seq = $this->db->query("select seq from js_user where user_hash = ?",$inviter)->row('seq');
 		
-		$packet = array('payload'=>$gcmPayload);
-		$this->_gcmMessage(GCM_API_KEY, $regIds, $packet);
+		if ($room['room_type'] == TYPE_MEETING)
+		{
+			$query = "select regid from js_device d where user_seq in (select user_seq from js_room_chatter where room_hash = ? and user_seq != ?)";
+			$result = $this->db->query($query,array($room_code,$inviter_seq))->result_array();
+			
+			$regIds = array();
+			foreach ($result as $row)
+			{
+				$regIds[] = $row['regid'];
+			}
+			
+			$gcmPayload = array(
+					"event"=>"PUSH:USER_JOIN_ROOM",
+					"data"=>array(
+							array(
+								KEY_CHAT::ROOM_CODE=>$room_code,
+								KEY_USER::IDX=>$inviter,
+								KEY_CHAT::ROOM_MEMBER=>$new_members
+					)
+				)
+			);
+			
+			$packet = array('payload'=>$gcmPayload);
+			$this->_gcmMessage(GCM_API_KEY, $regIds, $packet);
+			
+		}
+		else
+		{
+			// COMMAND에서는 알림할필요 ㄴㄴ
+			if ($room['room_host_seq'] != $inviter_seq)
+			{
+				Handler::$responsePayload['status'] = STATUS::INSUFFICIENT_ARGUMENTS;
+				Handler::$responsePayload['data'][] = array(KEY::RESPONSE_TEXT=>"호스트아니면 초대 ㄴㄴ");
+				return;
+			}
+		}
 		
 		$query = "insert into js_room_chatter (room_hash, user_seq, last_read_ts)
 				values ";
@@ -768,8 +793,8 @@ class SurveyModel extends Message {
 			$this->db->query('select seq from js_user where user_hash = ?',$svy[KEY_MESSAGE::SENDER_IDX])->row('seq');
 
 		$query =
-		"insert into js_survey(survey_title, survey_content, created_ts, creator_seq, open_ts, close_ts)
-				values( ?, ?, from_unixtime(?), ?, from_unixtime(?), from_unixtime(?) ) ";
+		"insert into js_survey(survey_title, survey_content, created_ts, creator_seq, open_ts, close_ts, is_result_public)
+				values( ?, ?, from_unixtime(?), ?, from_unixtime(?), from_unixtime(?), ? ) ";
 		$this->db->query($query,
 				array( 
 						$svy[KEY_MESSAGE::TITLE], 
@@ -777,7 +802,8 @@ class SurveyModel extends Message {
 						$svy[KEY_MESSAGE::CREATED_TS], 
 						$senderSeq,
 						$svy[KEY_SURVEY::FORM][KEY_SURVEY::OPEN_TS],
-						$svy[KEY_SURVEY::FORM][KEY_SURVEY::CLOSE_TS]	));
+						$svy[KEY_SURVEY::FORM][KEY_SURVEY::CLOSE_TS],
+						$svy[KEY_SURVEY::FORM][KEY_SURVEY::IS_RESULT_PUBLIC]	));
 
 		$svy_seq = $this->db->insert_id();
 		$svy_hash = md5('js_survey'.$svy_seq);
@@ -909,35 +935,68 @@ class SurveyModel extends Message {
 	}
 	
 	public function getSurveyContent() {
+
 		$survey_hash = Handler::$requestPayload['data'][0][KEY_MESSAGE::IDX];
+
+		$data = array();
+			
+		if (is_array($survey_hash))
+		{
+
+			foreach ($survey_hash as $hash)
+			{
+				$s = $this->getSurveyEntity($hash);
+				$data[] = array(KEY::_MESSAGE=>$s);
+			}
+		}
+		else
+		{
+
+			$s = $this->getSurveyEntity($hash);
+			$data = array(
+						array(
+								KEY::_MESSAGE=>$s
+								)
+					);
+		}
+
+		Handler::$responsePayload['status'] = STATUS::SUCCESS;
+		Handler::$responsePayload['data'] = $data;
+		return;
+	}
+	
+	private function getSurveyEntity($survey_hash)
+	{
 		$survey_seq = $this->db->query('select seq from js_survey where survey_hash = ?',$survey_hash)->row('seq');
 		
 		$data = array( array(
-						KEY::_MESSAGE=>
-							array(
-									KEY_MESSAGE::TYPE=>MESSAGE_TYPE_SURVEY*MESSAGE_TYPE_DIVIDER,
-									KEY_MESSAGE::IDX=>"",
-									KEY_MESSAGE::TITLE=>"",
-									KEY_MESSAGE::CONTENT=>"",
-									KEY_MESSAGE::SENDER_IDX=>"",
-									KEY_MESSAGE::CREATED_TS=>0,
-									KEY_SURVEY::FORM=>
-									array(
-											KEY_SURVEY::OPEN_TS=>0,
-											KEY_SURVEY::CLOSE_TS=>0,
-											KEY_SURVEY::QUESTIONS=> array()
-									),
-							)
-					) );
+				KEY::_MESSAGE=>
+				array(
+						KEY_MESSAGE::TYPE=>MESSAGE_TYPE_SURVEY*MESSAGE_TYPE_DIVIDER,
+						KEY_MESSAGE::IDX=>"",
+						KEY_MESSAGE::TITLE=>"",
+						KEY_MESSAGE::CONTENT=>"",
+						KEY_MESSAGE::SENDER_IDX=>"",
+						KEY_MESSAGE::CREATED_TS=>0,
+						KEY_SURVEY::NUM_UNCHECKERS=>0,
+						KEY_SURVEY::FORM=>
+						array(
+								KEY_SURVEY::IS_RESULT_PUBLIC=>0,
+								KEY_SURVEY::OPEN_TS=>0,
+								KEY_SURVEY::CLOSE_TS=>0,
+								KEY_SURVEY::QUESTIONS=> array()
+						),
+				)
+		) );
 		
-		$query = 
-			"SELECT 
-			survey_hash, survey_title, survey_content, 
-				unix_timestamp(a.created_ts) created_ts, 
-				b.user_hash, 
-				unix_timestamp(open_ts) open_ts, 
+		$query =
+		"SELECT
+			survey_hash, survey_title, survey_content, is_result_public ,
+				unix_timestamp(a.created_ts) created_ts,
+				b.user_hash,
+				unix_timestamp(open_ts) open_ts,
 				unix_timestamp(close_ts) close_ts
-				
+		
 			 FROM daondb.js_survey a
 			LEFT JOIN js_user b
 				ON a.creator_seq = b.seq
@@ -949,9 +1008,10 @@ class SurveyModel extends Message {
 		$data[0][KEY::_MESSAGE][KEY_MESSAGE::SENDER_IDX]=$baseInfo['user_hash'];
 		$data[0][KEY::_MESSAGE][KEY_MESSAGE::CREATED_TS]=$baseInfo['created_ts'];
 		$data[0][KEY::_MESSAGE][KEY_SURVEY::FORM][KEY_SURVEY::OPEN_TS]=$baseInfo['open_ts'];
+		$data[0][KEY::_MESSAGE][KEY_SURVEY::FORM][KEY_SURVEY::IS_RESULT_PUBLIC]=intval($baseInfo['is_result_public']);
 		$data[0][KEY::_MESSAGE][KEY_SURVEY::FORM][KEY_SURVEY::CLOSE_TS]=$baseInfo['close_ts'];
 		
-		$query = 
+		$query =
 		"SELECT
 		`js_survey_question`.`seq`,
 		`js_survey_question`.`question_title`,
@@ -961,32 +1021,39 @@ class SurveyModel extends Message {
 		WHERE survey_seq = ?";
 		$questions = $this->db->query($query,$survey_seq)->result_array();
 		foreach ( $questions as $q ) {
-			
-			$query = 
-				"SELECT
+				
+			$query =
+			"SELECT
 				`js_survey_question_option`.`option_content`
 				FROM `daondb`.`js_survey_question_option`
 				WHERE question_seq = ?";
 			$res = $this->db->query($query,$q['seq'])->result_array();
-			
+				
 			$options = array();
 			foreach ( $res as $row ) {
 				$options[] = $row['option_content'];
 			}
-			
+				
 			$question =
-				array(
-						KEY_SURVEY::IS_MULTIPLE=>$q['is_multiple'],
-						KEY_SURVEY::QUESTION_TITLE=>$q['question_title'],
-						KEY_SURVEY::QUESTION_CONTENT=>$q['question_content'],
-						KEY_SURVEY::OPTIONS=>$options
-				);
-			
+			array(
+					KEY_SURVEY::IS_MULTIPLE=>$q['is_multiple'],
+					KEY_SURVEY::QUESTION_TITLE=>$q['question_title'],
+					KEY_SURVEY::QUESTION_CONTENT=>$q['question_content'],
+					KEY_SURVEY::OPTIONS=>$options
+			);
+				
 			$data[0][KEY::_MESSAGE][KEY_SURVEY::FORM][KEY_SURVEY::QUESTIONS][] = $question;
 		}
-		Handler::$responsePayload['status'] = STATUS::SUCCESS;
-		Handler::$responsePayload['data'] = $data;
-		return;
+		
+		$query = "select
+							count(a.seq) n
+						from js_survey_receiver a
+						left join js_user b
+							on a.receiver_seq = b.seq
+						where a.survey_seq = ? and a.is_checked = 0";
+		$uncheckers = $this->db->query($query,$survey_seq)->row('n');
+		$data[0][KEY::_MESSAGE][KEY_SURVEY::NUM_UNCHECKERS] = $uncheckers;
+		return $data[0][KEY::_MESSAGE];
 	}
 	
 	public function answerSurvey() {
@@ -1013,6 +1080,8 @@ class SurveyModel extends Message {
 			
 			foreach ( $question as $optionIdx ) {
 				$this->db->query($query,array($survey_seq,$questionIdx,$optionIdx));
+				$query = 'insert into js_survey_answer (survey_seq, question_idx, option_idx, user_seq) values (?, ?, ?, ?)';
+				$this->db->query($query,array($survey_seq,$questionIdx,$optionIdx,$user_seq));
 			}
 		}
 		
